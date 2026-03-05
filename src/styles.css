@@ -1,4 +1,6 @@
-﻿:root {
+﻿@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+:root {
   --bg-1: #eef3ff;
   --bg-2: #f8fbff;
   --panel: #ffffff;
@@ -12,7 +14,7 @@
   --brand-soft: #e7efff;
   --success: #1b9468;
 
-  font-family: 'SUIT', 'Pretendard Variable', 'Noto Sans KR', sans-serif;
+  font-family: 'Pretendard Variable', 'Pretendard', 'Noto Sans KR', sans-serif;
   line-height: 1.45;
   font-weight: 400;
   color: var(--text);
@@ -1018,3 +1020,4 @@ input {
     grid-template-columns: 1fr;
   }
 }
+
