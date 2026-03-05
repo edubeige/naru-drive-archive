@@ -57,7 +57,7 @@ input {
 
 .gnb {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.5rem;
@@ -72,7 +72,7 @@ input {
 
 .gnb-left {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: 0.75rem;
 }
@@ -104,7 +104,7 @@ input {
 
 .semester-tabs {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 0.52rem;
 }
 
@@ -151,9 +151,9 @@ input {
 
 .nav-title-row {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 0.6rem;
 }
 
@@ -267,7 +267,7 @@ input {
   margin-left: 0.86rem;
   width: calc(100% - 0.86rem);
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -378,7 +378,7 @@ input {
 
 .file-row {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   gap: 1rem;
   align-items: center;
   border: 1px solid #d4e0f6;
@@ -400,6 +400,7 @@ input {
   align-items: flex-start;
   gap: 0.74rem;
   min-width: 0;
+  flex: 1;
 }
 
 .file-icon {
@@ -424,11 +425,12 @@ input {
 
 .file-actions {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
   justify-content: flex-end;
+  min-width: 340px;
 }
 
 .file-badge {
@@ -624,6 +626,7 @@ input {
 
   .file-actions {
     justify-content: flex-start;
+    min-width: 0;
   }
 
   .preview-body,
@@ -1880,3 +1883,4 @@ input:focus, button:focus-visible, a:focus-visible {
     font-size: 1rem;
   }
 }
+
