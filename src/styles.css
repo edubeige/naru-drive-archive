@@ -1782,3 +1782,101 @@ input:focus, button:focus-visible, a:focus-visible {
 
 
 
+
+/* Mobile UX refresh: reservation readability + drawer polish */
+.lnb-backdrop {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .lnb-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    border: 0;
+    background: rgba(16, 30, 62, 0.32);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 35;
+  }
+
+  .lnb-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .lnb {
+    left: 0;
+    transform: translateX(-106%);
+    width: min(360px, 86vw);
+    border-right: 1px solid #ccdaf5;
+    border-top-right-radius: 18px;
+    box-shadow: 18px 0 38px rgba(8, 22, 50, 0.24);
+    transition: transform 0.24s ease;
+    z-index: 40;
+  }
+
+  .lnb.open {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 760px) {
+  .reservation-card {
+    gap: 0.9rem;
+  }
+
+  .reservation-form-grid {
+    gap: 0.72rem;
+  }
+
+  .reservation-form-grid label {
+    font-size: 0.98rem;
+    gap: 0.42rem;
+    color: #2e4f89;
+  }
+
+  .reservation-form-grid input,
+  .reservation-form-grid select {
+    min-height: 48px;
+    font-size: 1.03rem;
+    padding: 0.7rem 0.78rem;
+    border-radius: 12px;
+    border-color: #adc4ee;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .top-item-chips .summary-chip {
+    font-size: 0.92rem;
+    padding: 0.35rem 0.76rem;
+  }
+
+  .loan-filter-tabs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .loan-filter-tabs .summary-chip {
+    width: 100%;
+    justify-content: center;
+    min-height: 42px;
+    font-size: 0.94rem;
+  }
+
+  .loan-title {
+    font-size: 1.1rem;
+  }
+
+  .loan-meta-badge {
+    font-size: 0.88rem;
+  }
+
+  .reservation-submit-row .action-button {
+    min-height: 48px;
+    font-size: 1rem;
+  }
+}

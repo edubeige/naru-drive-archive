@@ -369,7 +369,7 @@ function App() {
   const previewUrl = previewFile ? getPreviewUrl(previewFile) : null
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${isSidebarOpen ? 'sidebar-open' : ''}`}>
       <header className="gnb">
         <div className="gnb-left">
           <button
@@ -412,6 +412,12 @@ function App() {
       </header>
 
       <div className="layout">
+        <button
+          type="button"
+          className={`lnb-backdrop ${isSidebarOpen ? 'show' : ''}`}
+          aria-label="사이드바 닫기"
+          onClick={() => setIsSidebarOpen(false)}
+        />
         <aside className={`lnb ${isSidebarOpen ? 'open' : ''}`}>
           <div className="sidebar-tabs" role="tablist" aria-label="페이지 탭">
             <button
@@ -431,7 +437,10 @@ function App() {
               role="tab"
               aria-selected={activeTab === 'materials'}
               className={`sidebar-tab ${activeTab === 'materials' ? 'active' : ''}`}
-              onClick={() => setActiveTab('materials')}
+              onClick={() => {
+                setActiveTab('materials')
+                setIsSidebarOpen(false)
+              }}
             >
               과목 자료
             </button>
@@ -682,5 +691,6 @@ function App() {
 }
 
 export default App
+
 
 
