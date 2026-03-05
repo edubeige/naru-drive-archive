@@ -46,6 +46,33 @@ function formatDateLabel(dateKey: string): string {
   }).format(date)
 }
 
+function ColorPalette({
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  value: ScheduleColor
+  onChange: (color: ScheduleColor) => void
+  ariaLabel: string
+}) {
+  return (
+    <div className="color-palette" role="radiogroup" aria-label={ariaLabel}>
+      {SCHEDULE_COLOR_OPTIONS.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          role="radio"
+          aria-label={option.label}
+          aria-checked={value === option.value}
+          title={option.label}
+          className={`color-swatch ${option.value} ${value === option.value ? 'active' : ''}`}
+          onClick={() => onChange(option.value)}
+        />
+      ))}
+    </div>
+  )
+}
+
 export default function HomeDashboard() {
   const [majorEvents, setMajorEvents] = useState<MajorEventItem[]>([])
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEventItem[]>([])
@@ -415,15 +442,11 @@ export default function HomeDashboard() {
             placeholder="행사명"
             aria-label="일정 행사명"
           />
-          <select
+          <ColorPalette
             value={scheduleColorInput}
-            onChange={(event) => setScheduleColorInput(event.target.value as ScheduleColor)}
-            aria-label="일정 색상"
-          >
-            {SCHEDULE_COLOR_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+            onChange={setScheduleColorInput}
+            ariaLabel="일정 색상"
+          />
           <button type="button" className="action-button primary" onClick={() => void handleTopAddSchedule()} disabled={busy}>
             일정 추가
           </button>
@@ -492,15 +515,11 @@ export default function HomeDashboard() {
                   placeholder="이 날짜에 추가할 일정"
                   aria-label="선택 날짜 일정 추가"
                 />
-                <select
+                <ColorPalette
                   value={popupAddColor}
-                  onChange={(event) => setPopupAddColor(event.target.value as ScheduleColor)}
-                  aria-label="선택 날짜 일정 색상"
-                >
-                  {SCHEDULE_COLOR_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
+                  onChange={setPopupAddColor}
+                  ariaLabel="선택 날짜 일정 색상"
+                />
                 <button type="button" className="action-button primary" onClick={() => void handlePopupAddSchedule()} disabled={busy}>
                   추가
                 </button>
@@ -529,15 +548,11 @@ export default function HomeDashboard() {
                               onChange={(inputEvent) => setEditingTitle(inputEvent.target.value)}
                               aria-label="일정 제목 수정"
                             />
-                            <select
+                            <ColorPalette
                               value={editingColor}
-                              onChange={(inputEvent) => setEditingColor(inputEvent.target.value as ScheduleColor)}
-                              aria-label="일정 색상 수정"
-                            >
-                              {SCHEDULE_COLOR_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>{option.label}</option>
-                              ))}
-                            </select>
+                              onChange={setEditingColor}
+                              ariaLabel="일정 색상 수정"
+                            />
                           </div>
                         )}
 
@@ -603,6 +618,8 @@ export default function HomeDashboard() {
     </section>
   )
 }
+
+
 
 
 
