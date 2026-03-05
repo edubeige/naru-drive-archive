@@ -567,13 +567,6 @@ function App() {
             </section>
           )}
 
-          {activeTab === 'home' && (
-            <section className="home-sidebar-note">
-              <h2>홈 안내</h2>
-              <p>학년 주요행사와 캘린더 일정을 교사 전체가 공유 관리합니다.</p>
-              <p>추가/수정/삭제 내용은 서버에 즉시 저장됩니다.</p>
-            </section>
-          )}
 
           {activeTab === 'reservation' && (
             <section className="home-sidebar-note">
@@ -689,4 +682,5 @@ function App() {
 }
 
 export default App
+
 
