@@ -1059,3 +1059,67 @@ input:focus, button:focus-visible, a:focus-visible {
 }
 
 
+
+.list-actions {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.major-events-list li {
+  grid-template-columns: 1fr auto;
+}
+
+.major-events-list li > input {
+  border: 1px solid #c3d4f5;
+  border-radius: var(--radius-sm);
+  padding: 0.52rem 0.66rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.action-button.info {
+  border-color: #9fc0ff;
+  color: #1f4fb8;
+  background: linear-gradient(180deg, #f6f9ff, #e8f1ff);
+}
+
+.action-button.info:hover:not(:disabled) {
+  box-shadow: var(--shadow-sm);
+  background: linear-gradient(180deg, #edf4ff, #dfebff);
+}
+
+.action-button.neutral {
+  border-color: #c9d3e8;
+  color: #465a84;
+  background: linear-gradient(180deg, #ffffff, #f1f4fb);
+}
+
+.action-button.neutral:hover:not(:disabled) {
+  box-shadow: var(--shadow-sm);
+  background: linear-gradient(180deg, #f7f9fd, #edf2fa);
+}
+
+.action-button.danger {
+  border-color: #e7b2b2;
+  color: #8f2f2f;
+  background: linear-gradient(180deg, #fff6f6, #ffe8e8);
+}
+
+.action-button.danger:hover:not(:disabled) {
+  box-shadow: var(--shadow-sm);
+  background: linear-gradient(180deg, #ffecec, #ffdede);
+}
+
+@media (max-width: 760px) {
+  .major-events-list li {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .list-actions {
+    justify-content: flex-start;
+  }
+}

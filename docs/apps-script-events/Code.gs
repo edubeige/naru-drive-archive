@@ -55,6 +55,9 @@ function doPost(e) {
       case 'addMajorEvent':
         return jsonResponse({ success: true, data: addMajorEvent(ss, body.title) });
 
+      case 'updateMajorEvent':
+        return jsonResponse({ success: true, data: updateMajorEvent(ss, body.id, body.title) });
+
       case 'removeMajorEvent':
         removeMajorEvent(ss, body.id);
         return jsonResponse({ success: true });
@@ -216,6 +219,37 @@ function addMajorEvent(ss, title) {
   return created;
 }
 
+function updateMajorEvent(ss, id, title) {
+  const targetId = String(id || '').trim();
+  const trimmedTitle = String(title || '').trim();
+
+  if (!targetId) {
+    throw new Error('id is required');
+  }
+  if (!trimmedTitle) {
+    throw new Error('title is required');
+  }
+
+  const sheet = ss.getSheetByName(SHEET_MAJOR);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    throw new Error('major event not found');
+  }
+
+  const rows = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  for (let i = 0; i < rows.length; i++) {
+    if (String(rows[i][0]) === targetId) {
+      sheet.getRange(i + 2, 2).setValue(trimmedTitle);
+      return {
+        id: targetId,
+        title: trimmedTitle,
+        createdAt: rows[i][2],
+      };
+    }
+  }
+
+  throw new Error('major event not found');
+}
 function addScheduleEvent(ss, date, title) {
   const trimmedDate = String(date || '').trim();
   const trimmedTitle = String(title || '').trim();
@@ -321,3 +355,4 @@ function deleteById(sheet, id, idCol) {
     }
   }
 }
+

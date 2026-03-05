@@ -44,6 +44,9 @@ export default function HomeDashboard() {
   const [majorEvents, setMajorEvents] = useState<MajorEventItem[]>([])
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEventItem[]>([])
   const [majorInput, setMajorInput] = useState('')
+  const [editingMajorId, setEditingMajorId] = useState<string | null>(null)
+  const [editingMajorTitle, setEditingMajorTitle] = useState('')
+
   const [scheduleTitleInput, setScheduleTitleInput] = useState('')
   const [scheduleDateInput, setScheduleDateInput] = useState('')
 
@@ -118,6 +121,58 @@ export default function HomeDashboard() {
     }
   }
 
+  const startEditMajorEvent = (event: MajorEventItem) => {
+    setEditingMajorId(event.id)
+    setEditingMajorTitle(event.title)
+  }
+
+  const cancelEditMajorEvent = () => {
+    setEditingMajorId(null)
+    setEditingMajorTitle('')
+  }
+
+  const saveEditMajorEvent = async (event: MajorEventItem) => {
+    const nextTitle = editingMajorTitle.trim()
+    if (!nextTitle) {
+      return
+    }
+
+    const previous = majorEvents
+    const optimistic = { ...event, title: nextTitle }
+    setMajorEvents((prev) => prev.map((item) => (item.id === event.id ? optimistic : item)))
+    setBusy(true)
+
+    try {
+      const updated = await eventsRepository.updateMajorEvent(event.id, nextTitle)
+      setMajorEvents((prev) => prev.map((item) => (item.id === event.id ? updated : item)))
+      setEditingMajorId(null)
+      setEditingMajorTitle('')
+      setError(null)
+    } catch (e) {
+      setMajorEvents(previous)
+      setError(e instanceof Error ? e.message : '행사 수정에 실패했습니다.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const removeMajorEvent = async (id: string) => {
+    const previous = majorEvents
+    setMajorEvents((prev) => prev.filter((event) => event.id !== id))
+    setBusy(true)
+
+    try {
+      await eventsRepository.removeMajorEvent(id)
+      setEditingMajorId((prev) => (prev === id ? null : prev))
+      setError(null)
+    } catch (e) {
+      setMajorEvents(previous)
+      setError(e instanceof Error ? e.message : '행사 삭제에 실패했습니다.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const addScheduleEvent = async (date: string, title: string) => {
     const trimmedDate = date.trim()
     const trimmedTitle = title.trim()
@@ -168,22 +223,6 @@ export default function HomeDashboard() {
     } catch (e) {
       setScheduleEvents(previous)
       setError(e instanceof Error ? e.message : '일정 수정에 실패했습니다.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const removeMajorEvent = async (id: string) => {
-    const previous = majorEvents
-    setMajorEvents((prev) => prev.filter((event) => event.id !== id))
-    setBusy(true)
-
-    try {
-      await eventsRepository.removeMajorEvent(id)
-      setError(null)
-    } catch (e) {
-      setMajorEvents(previous)
-      setError(e instanceof Error ? e.message : '행사 삭제에 실패했습니다.')
     } finally {
       setBusy(false)
     }
@@ -276,14 +315,67 @@ export default function HomeDashboard() {
         {!majorEvents.length && <p className="empty-text">등록된 주요행사가 없습니다.</p>}
         {!!majorEvents.length && (
           <ul className="major-events-list">
-            {majorEvents.map((event) => (
-              <li key={event.id}>
-                <span>{event.title}</span>
-                <button type="button" onClick={() => void removeMajorEvent(event.id)} aria-label={`${event.title} 삭제`} disabled={busy}>
-                  삭제
-                </button>
-              </li>
-            ))}
+            {majorEvents.map((event) => {
+              const isEditingMajor = editingMajorId === event.id
+
+              return (
+                <li key={event.id}>
+                  {!isEditingMajor && <span>{event.title}</span>}
+
+                  {isEditingMajor && (
+                    <input
+                      value={editingMajorTitle}
+                      onChange={(inputEvent) => setEditingMajorTitle(inputEvent.target.value)}
+                      aria-label="주요행사 제목 수정"
+                    />
+                  )}
+
+                  <div className="list-actions">
+                    {!isEditingMajor && (
+                      <button
+                        type="button"
+                        className="action-button info"
+                        onClick={() => startEditMajorEvent(event)}
+                        disabled={busy}
+                      >
+                        수정
+                      </button>
+                    )}
+
+                    {isEditingMajor && (
+                      <>
+                        <button
+                          type="button"
+                          className="action-button primary"
+                          onClick={() => void saveEditMajorEvent(event)}
+                          disabled={busy}
+                        >
+                          저장
+                        </button>
+                        <button
+                          type="button"
+                          className="action-button neutral"
+                          onClick={cancelEditMajorEvent}
+                          disabled={busy}
+                        >
+                          취소
+                        </button>
+                      </>
+                    )}
+
+                    <button
+                      type="button"
+                      className="action-button danger"
+                      onClick={() => void removeMajorEvent(event.id)}
+                      aria-label={`${event.title} 삭제`}
+                      disabled={busy}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
       </article>
@@ -406,7 +498,7 @@ export default function HomeDashboard() {
                           {!isEditing && (
                             <button
                               type="button"
-                              className="action-button"
+                              className="action-button info"
                               onClick={() => {
                                 setEditingEventId(event.id)
                                 setEditingTitle(event.title)
@@ -429,7 +521,7 @@ export default function HomeDashboard() {
                               </button>
                               <button
                                 type="button"
-                                className="action-button"
+                                className="action-button neutral"
                                 onClick={() => {
                                   setEditingEventId(null)
                                   setEditingTitle('')
@@ -462,6 +554,3 @@ export default function HomeDashboard() {
     </section>
   )
 }
-
-
-

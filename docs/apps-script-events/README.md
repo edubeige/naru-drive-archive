@@ -69,3 +69,9 @@ VITE_EVENTS_API_URL=https://script.google.com/macros/s/XXXXXXXXXXXX/exec
 - date=2026-03-11`r
 - 	itle=수정된 일정명
 
+
+### updateMajorEvent
+- ction=updateMajorEvent
+- id=major_xxx
+- 	itle=수정된 주요행사명
+

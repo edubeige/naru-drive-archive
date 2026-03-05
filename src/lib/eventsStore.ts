@@ -19,6 +19,7 @@ export interface EventsSnapshot {
 export interface EventsRepository {
   getAll(): Promise<EventsSnapshot>
   addMajorEvent(title: string): Promise<MajorEventItem>
+  updateMajorEvent(id: string, title: string): Promise<MajorEventItem>
   removeMajorEvent(id: string): Promise<void>
   addScheduleEvent(date: string, title: string): Promise<ScheduleEventItem>
   updateScheduleEvent(id: string, date: string, title: string): Promise<ScheduleEventItem>
@@ -31,6 +32,7 @@ interface ApiPayload {
   action:
     | 'getAll'
     | 'addMajorEvent'
+    | 'updateMajorEvent'
     | 'removeMajorEvent'
     | 'addScheduleEvent'
     | 'updateScheduleEvent'
@@ -51,8 +53,6 @@ function ensureApiUrl(): string {
     throw new Error('VITE_EVENTS_API_URL is not configured')
   }
 
-  // Workspace-domain URL can fail CORS preflight on GitHub Pages.
-  // Normalize to the public web app pattern when possible.
   return EVENTS_API_URL.replace(
     /https:\/\/script\.google\.com\/a\/macros\/[^/]+\/s\//,
     'https://script.google.com/macros/s/',
@@ -153,6 +153,25 @@ class AppsScriptEventsRepository implements EventsRepository {
 
     const res = await callApi({ action: 'addMajorEvent', title: trimmed })
     return res.data as MajorEventItem
+  }
+
+  async updateMajorEvent(id: string, title: string): Promise<MajorEventItem> {
+    const trimmedId = id.trim()
+    const trimmedTitle = title.trim()
+
+    if (!trimmedId || !trimmedTitle) {
+      throw new Error('Major event id and title are required')
+    }
+
+    try {
+      const res = await callApi({ action: 'updateMajorEvent', id: trimmedId, title: trimmedTitle })
+      return res.data as MajorEventItem
+    } catch {
+      // Fallback for older backend: replace by remove + add.
+      await callApi({ action: 'removeMajorEvent', id: trimmedId })
+      const res = await callApi({ action: 'addMajorEvent', title: trimmedTitle })
+      return res.data as MajorEventItem
+    }
   }
 
   async removeMajorEvent(id: string): Promise<void> {
