@@ -29,7 +29,8 @@ export interface EventsRepository {
   removeScheduleEvent(id: string): Promise<void>
 }
 
-const EVENTS_API_URL = import.meta.env.VITE_EVENTS_API_URL as string | undefined
+const FALLBACK_EVENTS_API_URL = 'https://script.google.com/macros/s/AKfycbxQIRBA_Qsu_H1QTEIAOdgPT1K9f4fVwfj738ddToR6WwJGsnR6wDhwV9whVLROk1_X8g/exec'
+const EVENTS_API_URL = (import.meta.env.VITE_EVENTS_API_URL as string | undefined) || FALLBACK_EVENTS_API_URL
 
 interface ApiPayload {
   action:
@@ -233,3 +234,4 @@ class AppsScriptEventsRepository implements EventsRepository {
 }
 
 export const eventsRepository: EventsRepository = new AppsScriptEventsRepository()
+
