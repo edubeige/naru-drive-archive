@@ -472,10 +472,6 @@ export default function HomeDashboard() {
         </div>
       </article>
 
-      <article className="backend-note">
-        <h4>서버 저장 안내</h4>
-        <p>현재 일정은 `VITE_EVENTS_API_URL`로 지정한 Apps Script API에 저장됩니다.</p>
-      </article>
 
       {selectedDateKey && (
         <div className="calendar-overlay" onClick={closeDatePopup}>
@@ -607,3 +603,8 @@ export default function HomeDashboard() {
     </section>
   )
 }
+
+
+
+
+
