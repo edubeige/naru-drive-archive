@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+﻿name: Deploy to GitHub Pages
 
 on:
   push:
@@ -18,7 +18,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_EVENTS_API_URL: https://script.google.com/macros/s/AKfycbxQIRBA_Qsu_H1QTEIAOdgPT1K9f4fVwfj738ddToR6WwJGsnR6wDhwV9whVLROk1_X8g/exec
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_EVENTS_API_URL: ${{ vars.VITE_EVENTS_API_URL }}
+      VITE_RESERVATION_API_URL: ${{ vars.VITE_RESERVATION_API_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
