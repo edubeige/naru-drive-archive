@@ -139,6 +139,22 @@ function getPreviewUrl(file: FileItem): string | null {
   return `https://drive.google.com/file/d/${id}/preview`
 }
 
+function includesText(text: string, query: string): boolean {
+  return text.toLowerCase().includes(query.toLowerCase())
+}
+
+function folderMatches(node: FolderNode, query: string): boolean {
+  if (!query) {
+    return true
+  }
+
+  if (includesText(node.name, query)) {
+    return true
+  }
+
+  return node.childrenFolders.some((child) => folderMatches(child, query))
+}
+
 function App() {
   const [tree, setTree] = useState<DriveTree | null>(null)
   const [selection, setSelection] = useState<SelectionState>({
@@ -152,6 +168,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null)
+  const [navQuery, setNavQuery] = useState('')
 
   const apiUrl = import.meta.env.VITE_API_URL || FALLBACK_API_URL
 
@@ -171,7 +188,6 @@ function App() {
     return getSemesterNodes(selectedSubject)
   }, [selectedSubject])
 
-
   const selectedFolderPath = selection.lessonPath || selection.unitPath || selection.semesterPath || selection.subjectPath
 
   const selectedFolderNode = useMemo(() => {
@@ -183,6 +199,25 @@ function App() {
   }, [tree, selectedFolderPath])
 
   const files = selectedFolderNode?.files ?? []
+
+  const visibleFiles = useMemo(() => {
+    if (!navQuery.trim()) {
+      return files
+    }
+
+    return files.filter((file) => includesText(file.name, navQuery.trim()))
+  }, [files, navQuery])
+
+  const visibleSubjects = useMemo(() => {
+    const subjects = tree?.subjects ?? []
+    const query = navQuery.trim()
+
+    if (!query) {
+      return subjects
+    }
+
+    return subjects.filter((subject) => folderMatches(subject, query))
+  }, [tree, navQuery])
 
   const fetchData = async () => {
     setIsLoading(true)
@@ -363,12 +398,21 @@ function App() {
       <div className="layout">
         <aside className={`lnb ${isSidebarOpen ? 'open' : ''}`}>
           <section>
-            <h2>과목</h2>
+            <h2>과목 탐색</h2>
+            <input
+              className="nav-search"
+              value={navQuery}
+              onChange={(event) => setNavQuery(event.target.value)}
+              placeholder="과목, 단원, 차시, 파일 검색"
+              aria-label="탐색 검색"
+            />
+
             <ul className="subject-list">
-              {(tree?.subjects ?? []).map((subject) => {
+              {visibleSubjects.map((subject) => {
                 const isActiveSubject = selection.subjectPath === subject.fullPath
                 const semesterNodes = getSemesterNodes(subject)
                 const baseNodes = semesterNodes.length ? semesterNodes : [subject]
+                const visibleBaseNodes = baseNodes.filter((baseNode) => folderMatches(baseNode, navQuery.trim()))
 
                 return (
                   <li key={subject.fullPath} className="subject-item">
@@ -382,10 +426,10 @@ function App() {
 
                     {isActiveSubject && (
                       <ul className="semester-list">
-                        {baseNodes.map((baseNode) => {
+                        {visibleBaseNodes.map((baseNode) => {
                           const isSemester = baseNode.fullPath !== subject.fullPath
                           const isActiveSemester = selection.semesterPath === baseNode.fullPath || (!selection.semesterPath && !isSemester)
-                          const unitNodes = baseNode.childrenFolders
+                          const unitNodes = baseNode.childrenFolders.filter((unit) => folderMatches(unit, navQuery.trim()))
 
                           return (
                             <li key={baseNode.fullPath}>
@@ -404,6 +448,9 @@ function App() {
                                   {unitNodes.map((unit) => {
                                     const isExpanded = expandedUnits.has(unit.fullPath)
                                     const isUnitActive = selection.unitPath === unit.fullPath
+                                    const lessons = unit.childrenFolders.filter((lesson) =>
+                                      includesText(lesson.name, navQuery.trim()) || !navQuery.trim(),
+                                    )
 
                                     return (
                                       <li key={unit.fullPath}>
@@ -418,7 +465,7 @@ function App() {
 
                                         {isExpanded && unit.childrenFolders.length > 0 && (
                                           <ul className="lesson-list">
-                                            {unit.childrenFolders.map((lesson) => (
+                                            {lessons.map((lesson) => (
                                               <li key={lesson.fullPath}>
                                                 <button
                                                   type="button"
@@ -445,6 +492,8 @@ function App() {
                 )
               })}
             </ul>
+
+            {!visibleSubjects.length && <p className="no-search-result">검색 결과가 없습니다.</p>}
           </section>
         </aside>
 
@@ -452,6 +501,14 @@ function App() {
           <div className="content-header">
             <p className="breadcrumb-label">현재 위치</p>
             <h2>{breadcrumb}</h2>
+            <div className="summary-chips">
+              <span className="summary-chip">파일 {visibleFiles.length}개</span>
+              {selectedFolderNode?.url && (
+                <a className="summary-chip link" href={selectedFolderNode.url} target="_blank" rel="noopener noreferrer">
+                  원본 폴더 열기
+                </a>
+              )}
+            </div>
           </div>
 
           {isLoading && <div className="state-box">자료를 불러오는 중입니다...</div>}
@@ -467,13 +524,13 @@ function App() {
 
           {!isLoading && !error && !tree && <div className="state-box">표시할 자료가 없습니다.</div>}
 
-          {!isLoading && !error && tree && !files.length && (
-            <div className="state-box">선택한 폴더에 파일이 없습니다.</div>
+          {!isLoading && !error && tree && !visibleFiles.length && (
+            <div className="state-box">조건에 맞는 파일이 없습니다.</div>
           )}
 
-          {!isLoading && !error && !!files.length && (
+          {!isLoading && !error && !!visibleFiles.length && (
             <section className="file-list" aria-label="자료 목록">
-              {files.map((file) => {
+              {visibleFiles.map((file) => {
                 const iconKey = getFileIconKey(file.ext || file.name)
                 const rowPreviewUrl = getPreviewUrl(file)
 
@@ -493,7 +550,7 @@ function App() {
                       <span className={`file-badge ${iconKey}`}>{getFileTypeLabel(iconKey)}</span>
                       <button
                         type="button"
-                        className="action-button"
+                        className="action-button primary"
                         disabled={!rowPreviewUrl}
                         aria-label={`${file.name} 미리보기`}
                         onClick={() => setPreviewFile(file)}
@@ -561,4 +618,3 @@ function App() {
 }
 
 export default App
-
