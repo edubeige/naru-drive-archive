@@ -96,7 +96,7 @@ export default function ReservationDashboard() {
   const [items, setItems] = useState<ItemRecord[]>([])
   const [topItems, setTopItems] = useState<string[]>([])
   const [openLoans, setOpenLoans] = useState<LoanRecord[]>([])
-  const [filter, setFilter] = useState<OpenLoanFilter>('today')
+  const [filter, setFilter] = useState<OpenLoanFilter>('all')
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -319,11 +319,11 @@ export default function ReservationDashboard() {
             <button
               type="button"
               role="tab"
-              aria-selected={filter === 'today'}
-              className={`summary-chip chip-button ${filter === 'today' ? 'active' : ''}`}
-              onClick={() => setFilter('today')}
+              aria-selected={filter === 'all'}
+              className={`summary-chip chip-button ${filter === 'all' ? 'active' : ''}`}
+              onClick={() => setFilter('all')}
             >
-              오늘
+              전체
             </button>
             <button
               type="button"
@@ -337,11 +337,11 @@ export default function ReservationDashboard() {
             <button
               type="button"
               role="tab"
-              aria-selected={filter === 'all'}
-              className={`summary-chip chip-button ${filter === 'all' ? 'active' : ''}`}
-              onClick={() => setFilter('all')}
+              aria-selected={filter === 'today'}
+              className={`summary-chip chip-button ${filter === 'today' ? 'active' : ''}`}
+              onClick={() => setFilter('today')}
             >
-              전체
+              오늘
             </button>
           </div>
         </div>
@@ -355,9 +355,11 @@ export default function ReservationDashboard() {
               <li key={loan.id}>
                 <div>
                   <p className="loan-title">{loan.itemName}</p>
-                  <p className="loan-meta">
-                    {loan.className} · {formatLoanDate(loan.date)} · {loan.periodStart}~{loan.periodEnd}교시
-                  </p>
+                  <div className="loan-meta-badges">
+                    <span className="loan-meta-badge class">{loan.className}</span>
+                    <span className="loan-meta-badge date">{formatLoanDate(loan.date)}</span>
+                    <span className="loan-meta-badge period">{loan.periodStart}~{loan.periodEnd}교시</span>
+                  </div>
                 </div>
                 <button
                   type="button"
@@ -375,3 +377,6 @@ export default function ReservationDashboard() {
     </section>
   )
 }
+
+
+

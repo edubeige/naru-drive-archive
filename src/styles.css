@@ -1419,24 +1419,59 @@ input:focus, button:focus-visible, a:focus-visible {
   border: 1px solid #d8e4fb;
   border-radius: var(--radius-md);
   background: linear-gradient(180deg, #fbfdff, #f5f9ff);
-  padding: 0.7rem 0.75rem;
+  padding: 0.78rem 0.88rem;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.9rem;
+}
+
+.loan-open-list li > div {
+  min-width: 0;
 }
 
 .loan-title {
   margin: 0;
   color: #19345f;
-  font-size: 1rem;
-  font-weight: 800;
+  font-size: 1.18rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
 }
 
-.loan-meta {
-  margin: 0.18rem 0 0;
-  color: #6078a4;
-  font-size: 0.86rem;
+.loan-meta-badges {
+  margin-top: 0.34rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+}
+
+.loan-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.56rem;
+  border-radius: 999px;
+  font-size: 0.93rem;
+  font-weight: 800;
+  line-height: 1.25;
+  border: 1px solid transparent;
+}
+
+.loan-meta-badge.class {
+  background: #edf3ff;
+  color: #244a92;
+  border-color: #cbdbff;
+}
+
+.loan-meta-badge.date {
+  background: #fff7dc;
+  color: #6d5300;
+  border-color: #eed79d;
+}
+
+.loan-meta-badge.period {
+  background: #e7f9ee;
+  color: #1f6a3f;
+  border-color: #bde7ca;
 }
 
 @media (max-width: 1024px) {
@@ -1743,6 +1778,7 @@ input:focus, button:focus-visible, a:focus-visible {
   background: #94dfaf;
   border-color: #7bcea0;
 }
+
 
 
 
