@@ -1455,3 +1455,115 @@ input:focus, button:focus-visible, a:focus-visible {
   }
 }
 
+
+/* Schedule color + readability */
+.inline-form.three-col {
+  grid-template-columns: 170px 1fr 110px auto;
+}
+
+.inline-form.three-col select,
+.popup-add-form.color-row select {
+  border: 1px solid #c3d4f5;
+  border-radius: var(--radius-sm);
+  padding: 0.56rem 0.68rem;
+  background: #fff;
+  color: #213a69;
+  font-weight: 700;
+}
+
+.day-cell .day-top {
+  color: #172947;
+  font-weight: 800;
+}
+
+.day-cell.sun .day-top {
+  color: #c94848;
+}
+
+.day-cell.sat .day-top {
+  color: #315bc2;
+}
+
+.day-events .event-chip {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid transparent;
+}
+
+.day-events .event-chip.blue {
+  background: #dfeaff;
+  border-color: #bfd3ff;
+  color: #1f468f;
+}
+
+.day-events .event-chip.yellow {
+  background: #fff4cf;
+  border-color: #f1dc98;
+  color: #7a5a00;
+}
+
+.day-events .event-chip.green {
+  background: #ddf7e7;
+  border-color: #b2e7c6;
+  color: #1f6a3f;
+}
+
+.day-events .event-chip.more {
+  background: #eef3ff;
+  border-color: #d3dff8;
+  color: #425f9d;
+}
+
+.popup-add-form.color-row {
+  grid-template-columns: 1fr 120px auto;
+}
+
+.popup-add-form.color-row.single-edit {
+  grid-template-columns: 1fr 120px;
+}
+
+.event-color-badge {
+  margin: 0.3rem 0 0;
+  width: fit-content;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.event-color-badge.blue {
+  background: #dfeaff;
+  border-color: #bfd3ff;
+  color: #1f468f;
+}
+
+.event-color-badge.yellow {
+  background: #fff4cf;
+  border-color: #f1dc98;
+  color: #7a5a00;
+}
+
+.event-color-badge.green {
+  background: #ddf7e7;
+  border-color: #b2e7c6;
+  color: #1f6a3f;
+}
+
+@media (max-width: 760px) {
+  .inline-form.three-col {
+    grid-template-columns: 1fr;
+  }
+
+  .popup-add-form.color-row,
+  .popup-add-form.color-row.single-edit {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,4 +1,6 @@
-﻿export interface MajorEventItem {
+﻿export type ScheduleColor = 'blue' | 'yellow' | 'green'
+
+export interface MajorEventItem {
   id: string
   title: string
   createdAt: string
@@ -8,6 +10,7 @@ export interface ScheduleEventItem {
   id: string
   title: string
   date: string // YYYY-MM-DD
+  color: ScheduleColor
   createdAt: string
 }
 
@@ -21,8 +24,8 @@ export interface EventsRepository {
   addMajorEvent(title: string): Promise<MajorEventItem>
   updateMajorEvent(id: string, title: string): Promise<MajorEventItem>
   removeMajorEvent(id: string): Promise<void>
-  addScheduleEvent(date: string, title: string): Promise<ScheduleEventItem>
-  updateScheduleEvent(id: string, date: string, title: string): Promise<ScheduleEventItem>
+  addScheduleEvent(date: string, title: string, color: ScheduleColor): Promise<ScheduleEventItem>
+  updateScheduleEvent(id: string, date: string, title: string, color: ScheduleColor): Promise<ScheduleEventItem>
   removeScheduleEvent(id: string): Promise<void>
 }
 
@@ -39,6 +42,7 @@ interface ApiPayload {
     | 'removeScheduleEvent'
   title?: string
   date?: string
+  color?: ScheduleColor
   id?: string
 }
 
@@ -85,22 +89,30 @@ function normalizeDateToKey(value: unknown): string {
   return ''
 }
 
+function normalizeScheduleColor(value: unknown): ScheduleColor {
+  if (value === 'yellow' || value === 'green' || value === 'blue') {
+    return value
+  }
+  return 'blue'
+}
+
 function normalizeScheduleEvent(item: unknown): ScheduleEventItem | null {
   if (!item || typeof item !== 'object') {
     return null
   }
 
-  const raw = item as Partial<ScheduleEventItem> & { date?: unknown }
+  const raw = item as Partial<ScheduleEventItem> & { date?: unknown; color?: unknown }
   const date = normalizeDateToKey(raw.date)
   const id = String(raw.id ?? '').trim()
   const title = String(raw.title ?? '').trim()
+  const color = normalizeScheduleColor(raw.color)
   const createdAt = String(raw.createdAt ?? '').trim()
 
   if (!id || !title || !date) {
     return null
   }
 
-  return { id, title, date, createdAt }
+  return { id, title, date, color, createdAt }
 }
 
 async function callApi(payload: ApiPayload): Promise<ApiResponse> {
@@ -110,6 +122,7 @@ async function callApi(payload: ApiPayload): Promise<ApiResponse> {
   form.set('action', payload.action)
   if (payload.title) form.set('title', payload.title)
   if (payload.date) form.set('date', payload.date)
+  if (payload.color) form.set('color', payload.color)
   if (payload.id) form.set('id', payload.id)
 
   const response = await fetch(url, {
@@ -167,7 +180,6 @@ class AppsScriptEventsRepository implements EventsRepository {
       const res = await callApi({ action: 'updateMajorEvent', id: trimmedId, title: trimmedTitle })
       return res.data as MajorEventItem
     } catch {
-      // Fallback for older backend: replace by remove + add.
       await callApi({ action: 'removeMajorEvent', id: trimmedId })
       const res = await callApi({ action: 'addMajorEvent', title: trimmedTitle })
       return res.data as MajorEventItem
@@ -178,7 +190,7 @@ class AppsScriptEventsRepository implements EventsRepository {
     await callApi({ action: 'removeMajorEvent', id })
   }
 
-  async addScheduleEvent(date: string, title: string): Promise<ScheduleEventItem> {
+  async addScheduleEvent(date: string, title: string, color: ScheduleColor): Promise<ScheduleEventItem> {
     const trimmedDate = date.trim()
     const trimmedTitle = title.trim()
 
@@ -186,7 +198,7 @@ class AppsScriptEventsRepository implements EventsRepository {
       throw new Error('Schedule event date and title are required')
     }
 
-    const res = await callApi({ action: 'addScheduleEvent', date: trimmedDate, title: trimmedTitle })
+    const res = await callApi({ action: 'addScheduleEvent', date: trimmedDate, title: trimmedTitle, color })
     const normalized = normalizeScheduleEvent(res.data)
 
     if (!normalized) {
@@ -196,7 +208,7 @@ class AppsScriptEventsRepository implements EventsRepository {
     return normalized
   }
 
-  async updateScheduleEvent(id: string, date: string, title: string): Promise<ScheduleEventItem> {
+  async updateScheduleEvent(id: string, date: string, title: string, color: ScheduleColor): Promise<ScheduleEventItem> {
     const trimmedId = id.trim()
     const trimmedDate = date.trim()
     const trimmedTitle = title.trim()
@@ -205,7 +217,7 @@ class AppsScriptEventsRepository implements EventsRepository {
       throw new Error('Schedule event id, date and title are required')
     }
 
-    const res = await callApi({ action: 'updateScheduleEvent', id: trimmedId, date: trimmedDate, title: trimmedTitle })
+    const res = await callApi({ action: 'updateScheduleEvent', id: trimmedId, date: trimmedDate, title: trimmedTitle, color })
     const normalized = normalizeScheduleEvent(res.data)
 
     if (!normalized) {

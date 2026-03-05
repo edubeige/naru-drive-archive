@@ -1,7 +1,13 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import { eventsRepository, type MajorEventItem, type ScheduleEventItem } from '../lib/eventsStore'
+import { eventsRepository, type MajorEventItem, type ScheduleColor, type ScheduleEventItem } from '../lib/eventsStore'
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
+
+const SCHEDULE_COLOR_OPTIONS: Array<{ value: ScheduleColor; label: string }> = [
+  { value: 'blue', label: '하늘' },
+  { value: 'yellow', label: '노랑' },
+  { value: 'green', label: '연두' },
+]
 
 function buildMonthGrid(viewDate: Date): Date[] {
   const year = viewDate.getFullYear()
@@ -49,11 +55,14 @@ export default function HomeDashboard() {
 
   const [scheduleTitleInput, setScheduleTitleInput] = useState('')
   const [scheduleDateInput, setScheduleDateInput] = useState('')
+  const [scheduleColorInput, setScheduleColorInput] = useState<ScheduleColor>('blue')
 
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null)
   const [popupAddTitle, setPopupAddTitle] = useState('')
+  const [popupAddColor, setPopupAddColor] = useState<ScheduleColor>('blue')
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
+  const [editingColor, setEditingColor] = useState<ScheduleColor>('blue')
 
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date()
@@ -173,7 +182,7 @@ export default function HomeDashboard() {
     }
   }
 
-  const addScheduleEvent = async (date: string, title: string) => {
+  const addScheduleEvent = async (date: string, title: string, color: ScheduleColor) => {
     const trimmedDate = date.trim()
     const trimmedTitle = title.trim()
     if (!trimmedDate || !trimmedTitle) {
@@ -185,6 +194,7 @@ export default function HomeDashboard() {
       id: tempId,
       date: trimmedDate,
       title: trimmedTitle,
+      color,
       createdAt: new Date().toISOString(),
     }
 
@@ -192,7 +202,7 @@ export default function HomeDashboard() {
     setBusy(true)
 
     try {
-      const created = await eventsRepository.addScheduleEvent(trimmedDate, trimmedTitle)
+      const created = await eventsRepository.addScheduleEvent(trimmedDate, trimmedTitle, color)
       setScheduleEvents((prev) => sortScheduleEvents(prev.map((event) => (event.id === tempId ? created : event))))
       setError(null)
     } catch (e) {
@@ -203,22 +213,23 @@ export default function HomeDashboard() {
     }
   }
 
-  const updateScheduleEvent = async (event: ScheduleEventItem, title: string) => {
+  const updateScheduleEvent = async (event: ScheduleEventItem, title: string, color: ScheduleColor) => {
     const nextTitle = title.trim()
     if (!nextTitle) {
       return
     }
 
     const previous = scheduleEvents
-    const optimistic = { ...event, title: nextTitle }
+    const optimistic = { ...event, title: nextTitle, color }
     setScheduleEvents((prev) => sortScheduleEvents(prev.map((item) => (item.id === event.id ? optimistic : item))))
     setBusy(true)
 
     try {
-      const updated = await eventsRepository.updateScheduleEvent(event.id, event.date, nextTitle)
+      const updated = await eventsRepository.updateScheduleEvent(event.id, event.date, nextTitle, color)
       setScheduleEvents((prev) => sortScheduleEvents(prev.map((item) => (item.id === event.id ? updated : item))))
       setEditingEventId(null)
       setEditingTitle('')
+      setEditingColor('blue')
       setError(null)
     } catch (e) {
       setScheduleEvents(previous)
@@ -248,9 +259,10 @@ export default function HomeDashboard() {
   const handleTopAddSchedule = async () => {
     const date = scheduleDateInput.trim()
     const title = scheduleTitleInput.trim()
-    await addScheduleEvent(date, title)
+    await addScheduleEvent(date, title, scheduleColorInput)
     setScheduleDateInput('')
     setScheduleTitleInput('')
+    setScheduleColorInput('blue')
   }
 
   const handlePopupAddSchedule = async () => {
@@ -258,8 +270,9 @@ export default function HomeDashboard() {
       return
     }
     const title = popupAddTitle.trim()
-    await addScheduleEvent(selectedDateKey, title)
+    await addScheduleEvent(selectedDateKey, title, popupAddColor)
     setPopupAddTitle('')
+    setPopupAddColor('blue')
   }
 
   const moveMonth = (offset: number) => {
@@ -275,15 +288,19 @@ export default function HomeDashboard() {
     setSelectedDateKey(dateKey)
     setScheduleDateInput(dateKey)
     setPopupAddTitle('')
+    setPopupAddColor('blue')
     setEditingEventId(null)
     setEditingTitle('')
+    setEditingColor('blue')
   }
 
   const closeDatePopup = () => {
     setSelectedDateKey(null)
     setPopupAddTitle('')
+    setPopupAddColor('blue')
     setEditingEventId(null)
     setEditingTitle('')
+    setEditingColor('blue')
   }
 
   return (
@@ -385,7 +402,7 @@ export default function HomeDashboard() {
           <h3>일정 캘린더</h3>
           <button type="button" className="action-button calendar-today-btn" onClick={goCurrentMonth}>오늘</button>
         </div>
-        <div className="inline-form two-col">
+        <div className="inline-form three-col">
           <input
             type="date"
             value={scheduleDateInput}
@@ -398,6 +415,15 @@ export default function HomeDashboard() {
             placeholder="행사명"
             aria-label="일정 행사명"
           />
+          <select
+            value={scheduleColorInput}
+            onChange={(event) => setScheduleColorInput(event.target.value as ScheduleColor)}
+            aria-label="일정 색상"
+          >
+            {SCHEDULE_COLOR_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
           <button type="button" className="action-button primary" onClick={() => void handleTopAddSchedule()} disabled={busy}>
             일정 추가
           </button>
@@ -422,21 +448,23 @@ export default function HomeDashboard() {
             const isCurrentMonth = date.getMonth() === calendarMonth.getMonth()
             const isToday = key === toDateKey(new Date())
             const isSelected = key === selectedDateKey
+            const weekDay = date.getDay()
+            const weekendClass = weekDay === 0 ? 'sun' : weekDay === 6 ? 'sat' : ''
 
             return (
               <button
                 key={key}
                 type="button"
-                className={`day-cell ${isCurrentMonth ? '' : 'dimmed'} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
+                className={`day-cell ${weekendClass} ${isCurrentMonth ? '' : 'dimmed'} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
                 onClick={() => openDatePopup(key)}
                 aria-label={`${key} 일정 보기`}
               >
                 <div className="day-top">{date.getDate()}</div>
                 <div className="day-events">
                   {events.slice(0, 3).map((event) => (
-                    <p key={event.id} title={event.title}>{event.title}</p>
+                    <p key={event.id} className={`event-chip ${event.color}`} title={event.title}>{event.title}</p>
                   ))}
-                  {events.length > 3 && <p>+{events.length - 3}개</p>}
+                  {events.length > 3 && <p className="event-chip more">+{events.length - 3}개</p>}
                 </div>
               </button>
             )
@@ -461,13 +489,22 @@ export default function HomeDashboard() {
             </header>
 
             <div className="calendar-modal-body">
-              <div className="popup-add-form">
+              <div className="popup-add-form color-row">
                 <input
                   value={popupAddTitle}
                   onChange={(event) => setPopupAddTitle(event.target.value)}
                   placeholder="이 날짜에 추가할 일정"
                   aria-label="선택 날짜 일정 추가"
                 />
+                <select
+                  value={popupAddColor}
+                  onChange={(event) => setPopupAddColor(event.target.value as ScheduleColor)}
+                  aria-label="선택 날짜 일정 색상"
+                >
+                  {SCHEDULE_COLOR_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
                 <button type="button" className="action-button primary" onClick={() => void handlePopupAddSchedule()} disabled={busy}>
                   추가
                 </button>
@@ -482,15 +519,29 @@ export default function HomeDashboard() {
 
                     return (
                       <li key={event.id} className="popup-event-row">
-                        {!isEditing && <p className="event-full-title">{event.title}</p>}
+                        {!isEditing && (
+                          <>
+                            <p className="event-full-title">{event.title}</p>
+                            <p className={`event-color-badge ${event.color}`}>{SCHEDULE_COLOR_OPTIONS.find((x) => x.value === event.color)?.label ?? '하늘'}</p>
+                          </>
+                        )}
 
                         {isEditing && (
-                          <div className="popup-add-form single">
+                          <div className="popup-add-form color-row single-edit">
                             <input
                               value={editingTitle}
                               onChange={(inputEvent) => setEditingTitle(inputEvent.target.value)}
                               aria-label="일정 제목 수정"
                             />
+                            <select
+                              value={editingColor}
+                              onChange={(inputEvent) => setEditingColor(inputEvent.target.value as ScheduleColor)}
+                              aria-label="일정 색상 수정"
+                            >
+                              {SCHEDULE_COLOR_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                              ))}
+                            </select>
                           </div>
                         )}
 
@@ -502,6 +553,7 @@ export default function HomeDashboard() {
                               onClick={() => {
                                 setEditingEventId(event.id)
                                 setEditingTitle(event.title)
+                                setEditingColor(event.color)
                               }}
                               disabled={busy}
                             >
@@ -514,7 +566,7 @@ export default function HomeDashboard() {
                               <button
                                 type="button"
                                 className="action-button primary"
-                                onClick={() => void updateScheduleEvent(event, editingTitle)}
+                                onClick={() => void updateScheduleEvent(event, editingTitle, editingColor)}
                                 disabled={busy}
                               >
                                 저장
@@ -525,6 +577,7 @@ export default function HomeDashboard() {
                                 onClick={() => {
                                   setEditingEventId(null)
                                   setEditingTitle('')
+                                  setEditingColor('blue')
                                 }}
                                 disabled={busy}
                               >
@@ -554,5 +607,3 @@ export default function HomeDashboard() {
     </section>
   )
 }
-
-

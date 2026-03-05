@@ -36,7 +36,7 @@ VITE_EVENTS_API_URL=https://script.google.com/macros/s/XXXXXXXXXXXX/exec
 ## 5) 동작 확인
 홈 탭에서
 - `학년 주요행사` 추가/삭제
-- `일정 캘린더`에 날짜+행사명 추가
+- `일정 캘린더` 날짜+행사+색상(하늘/노랑/연두) 추가
 
 브라우저 새로고침 후에도 데이터 유지되면 성공.
 
@@ -58,20 +58,20 @@ VITE_EVENTS_API_URL=https://script.google.com/macros/s/XXXXXXXXXXXX/exec
 - `action=addScheduleEvent`
 - `date=2026-03-11`
 - `title=학급 임원선거`
+- `color=blue|yellow|green`
+
+### updateScheduleEvent
+- `action=updateScheduleEvent`
+- `id=schedule_xxx`
+- `date=2026-03-11`
+- `title=수정된 일정명`
+- `color=blue|yellow|green`
 
 ### removeScheduleEvent
 - `action=removeScheduleEvent`
 - `id=schedule_xxx`
 
-### updateScheduleEvent
-- ction=updateScheduleEvent`r
-- id=schedule_xxx`r
-- date=2026-03-11`r
-- 	itle=수정된 일정명
-
-
 ### updateMajorEvent
-- ction=updateMajorEvent
-- id=major_xxx
-- 	itle=수정된 주요행사명
-
+- `action=updateMajorEvent`
+- `id=major_xxx`
+- `title=수정된 주요행사명`
