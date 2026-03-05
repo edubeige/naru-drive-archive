@@ -57,7 +57,7 @@ input {
 
 .gnb {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.5rem;
@@ -72,6 +72,7 @@ input {
 
 .gnb-left {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 0.75rem;
 }
@@ -102,7 +103,8 @@ input {
 }
 
 .semester-tabs {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   gap: 0.52rem;
 }
 
@@ -149,8 +151,9 @@ input {
 
 .nav-title-row {
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 0.6rem;
 }
 
@@ -162,7 +165,7 @@ input {
 }
 
 .nav-fold-actions {
-  display: inline-flex;
+  display: flex;
   gap: 0.3rem;
 }
 
@@ -264,7 +267,7 @@ input {
   margin-left: 0.86rem;
   width: calc(100% - 0.86rem);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
 }
 
@@ -327,7 +330,8 @@ input {
 }
 
 .summary-chip {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
   border-radius: 999px;
   padding: 0.26rem 0.69rem;
@@ -374,7 +378,7 @@ input {
 
 .file-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1rem;
   align-items: center;
   border: 1px solid #d4e0f6;
@@ -420,6 +424,7 @@ input {
 
 .file-actions {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
@@ -427,7 +432,8 @@ input {
 }
 
 .file-badge {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
@@ -511,8 +517,9 @@ input {
 .preview-header,
 .preview-footer {
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 0.6rem;
   padding: 0.72rem 0.94rem;
   border-bottom: 1px solid #e2eaff;
@@ -560,7 +567,7 @@ input {
 
 @media (max-width: 1024px) {
   .menu-button {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
   }
@@ -704,8 +711,9 @@ input {
 
 .home-card-head {
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 0.6rem;
   margin-bottom: 0.65rem;
 }
@@ -753,8 +761,9 @@ input {
   padding: 0.56rem 0.68rem;
   background: #f8fbff;
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 0.6rem;
 }
 
@@ -779,7 +788,8 @@ input {
 }
 
 .calendar-nav {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
   gap: 0.6rem;
   margin-bottom: 0.55rem;
@@ -838,7 +848,8 @@ input {
   width: 24px;
   height: 24px;
   border-radius: 999px;
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
@@ -864,8 +875,9 @@ input {
 
 .monthly-inline {
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   color: #5f7399;
   font-size: 0.86rem;
 }
@@ -936,7 +948,7 @@ input {
 .calendar-modal-head {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: center;
   gap: 0.7rem;
   padding: 1.05rem;
   border-bottom: 1px solid #e2ebfd;
@@ -1062,7 +1074,7 @@ input:focus, button:focus-visible, a:focus-visible {
 
 
 .list-actions {
-  display: inline-flex;
+  display: flex;
   gap: 0.4rem;
   align-items: center;
   flex-wrap: wrap;
@@ -1229,7 +1241,8 @@ input:focus, button:focus-visible, a:focus-visible {
 
 /* Calendar controls polish */
 .calendar-nav {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
   gap: 0.7rem;
   margin: 0.2rem 0 0.7rem;
@@ -1314,7 +1327,7 @@ input:focus, button:focus-visible, a:focus-visible {
 @media (max-width: 760px) {
   .calendar-nav {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
   }
 
   .calendar-nav strong {
@@ -1384,7 +1397,7 @@ input:focus, button:focus-visible, a:focus-visible {
 }
 
 .loan-filter-tabs {
-  display: inline-flex;
+  display: flex;
   gap: 0.35rem;
   flex-wrap: wrap;
 }
@@ -1408,7 +1421,7 @@ input:focus, button:focus-visible, a:focus-visible {
   background: linear-gradient(180deg, #fbfdff, #f5f9ff);
   padding: 0.7rem 0.75rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   gap: 0.8rem;
 }
@@ -1585,7 +1598,8 @@ input:focus, button:focus-visible, a:focus-visible {
 }
 
 .color-palette {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
   gap: 0.34rem;
   padding: 0.2rem 0.28rem;
@@ -1653,8 +1667,9 @@ input:focus, button:focus-visible, a:focus-visible {
 
 .today-schedule-head {
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 0.55rem;
   margin-bottom: 0.5rem;
 }
@@ -1681,6 +1696,7 @@ input:focus, button:focus-visible, a:focus-visible {
 
 .today-schedule-list li {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 0.4rem;
   border: 1px solid #d8e5fb;
@@ -1727,3 +1743,6 @@ input:focus, button:focus-visible, a:focus-visible {
   background: #94dfaf;
   border-color: #7bcea0;
 }
+
+
+
