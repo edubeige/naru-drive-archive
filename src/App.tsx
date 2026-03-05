@@ -26,6 +26,8 @@ const FALLBACK_API_URL =
   'https://script.google.com/macros/s/AKfycbzONOmQfiiuOEn7_jeOChPkzS-_qAsuFfMDreUs3o43OLOF6e8GezyDny8yqtL_TUBR6Q/exec'
 
 const SEMESTER_NAMES = ['1학기', '2학기']
+const MATERIALS_CACHE_KEY = 'naru_materials_cache_v1'
+const MATERIALS_CACHE_TTL_MS = 1000 * 60 * 10
 
 const FILE_ICON_MAP: Record<FileIconKey, string> = {
   presentation: '📊',
@@ -38,6 +40,44 @@ const FILE_ICON_MAP: Record<FileIconKey, string> = {
   file: '📄',
 }
 
+interface MaterialsCachePayload {
+  savedAt: number
+  items: DriveItemRaw[]
+}
+
+function readMaterialsCache(): DriveItemRaw[] | null {
+  try {
+    const raw = localStorage.getItem(MATERIALS_CACHE_KEY)
+    if (!raw) {
+      return null
+    }
+
+    const parsed = JSON.parse(raw) as MaterialsCachePayload
+    if (!parsed?.items || !Array.isArray(parsed.items)) {
+      return null
+    }
+
+    if (Date.now() - parsed.savedAt > MATERIALS_CACHE_TTL_MS) {
+      return null
+    }
+
+    return parsed.items
+  } catch {
+    return null
+  }
+}
+
+function writeMaterialsCache(items: DriveItemRaw[]): void {
+  try {
+    const payload: MaterialsCachePayload = {
+      savedAt: Date.now(),
+      items,
+    }
+    localStorage.setItem(MATERIALS_CACHE_KEY, JSON.stringify(payload))
+  } catch {
+    // ignore localStorage errors
+  }
+}
 function hasSemesterChildren(subject: FolderNode): boolean {
   return subject.childrenFolders.some((child) => SEMESTER_NAMES.includes(child.name))
 }
@@ -221,9 +261,28 @@ function App() {
     return subjects.filter((subject) => folderMatches(subject, query))
   }, [tree, navQuery])
 
-  const fetchData = async () => {
-    setIsLoading(true)
-    setError(null)
+  const applyTreeFromItems = (items: DriveItemRaw[]) => {
+    const nextTree = buildDriveTree(items)
+    setTree(nextTree)
+
+    const nextSelection = createSelectionForSubject(nextTree.subjects[0])
+    setSelection(nextSelection)
+
+    const nextExpandedUnits = new Set<string>()
+    if (nextSelection.unitPath) {
+      nextExpandedUnits.add(nextSelection.unitPath)
+    }
+
+    setExpandedUnits(nextExpandedUnits)
+    setExpandedSubjects(new Set(nextSelection.subjectPath ? [nextSelection.subjectPath] : []))
+  }
+
+  const fetchData = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false
+    if (!silent) {
+      setIsLoading(true)
+      setError(null)
+    }
 
     try {
       const response = await fetch(apiUrl)
@@ -238,24 +297,18 @@ function App() {
         return
       }
 
-      const nextTree = buildDriveTree(json)
-      setTree(nextTree)
-
-      const nextSelection = createSelectionForSubject(nextTree.subjects[0])
-      setSelection(nextSelection)
-
-      const nextExpandedUnits = new Set<string>()
-      if (nextSelection.unitPath) {
-        nextExpandedUnits.add(nextSelection.unitPath)
-      }
-
-      setExpandedUnits(nextExpandedUnits)
-      setExpandedSubjects(new Set(nextTree.subjects.map((subject) => subject.fullPath)))
+      writeMaterialsCache(json)
+      applyTreeFromItems(json)
+      setError(null)
     } catch {
-      setError('자료를 불러오지 못했습니다. 네트워크 상태 또는 API URL을 확인해 주세요.')
-      setTree(null)
+      if (!silent) {
+        setError('자료를 불러오지 못했습니다. 네트워크 상태 또는 API URL을 확인해 주세요.')
+        setTree(null)
+      }
     } finally {
-      setIsLoading(false)
+      if (!silent) {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -265,6 +318,20 @@ function App() {
     }
 
     setHasFetchedMaterials(true)
+
+    const cachedItems = readMaterialsCache()
+    if (cachedItems?.length) {
+      try {
+        applyTreeFromItems(cachedItems)
+        setError(null)
+      } catch {
+        // ignore broken cache
+      }
+
+      void fetchData({ silent: true })
+      return
+    }
+
     void fetchData()
   }, [activeTab, hasFetchedMaterials])
 
@@ -691,6 +758,10 @@ function App() {
 }
 
 export default App
+
+
+
+
 
 
 
