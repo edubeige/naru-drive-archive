@@ -216,8 +216,13 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null)
   const [navQuery, setNavQuery] = useState('')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null)
 
   const apiUrl = import.meta.env.VITE_API_URL || FALLBACK_API_URL
+  const materialsUploadEnabled = (import.meta.env.VITE_ENABLE_MATERIALS_UPLOAD ?? 'false') === 'true'
+  const materialsUploadApiUrl = import.meta.env.VITE_MATERIALS_UPLOAD_API_URL || apiUrl
 
   const selectedSubject = useMemo(() => {
     if (!tree || !selection.subjectPath) {
@@ -432,6 +437,44 @@ function App() {
     setIsSidebarOpen(false)
   }
 
+
+  const handleUploadToDrive = async () => {
+    if (!materialsUploadEnabled) {
+      return
+    }
+
+    if (!uploadFile || !selectedFolderPath) {
+      setUploadMessage('업로드할 파일과 대상 폴더를 먼저 선택해 주세요.')
+      return
+    }
+
+    setIsUploading(true)
+    setUploadMessage(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('action', 'uploadFile')
+      formData.append('targetPath', selectedFolderPath)
+      formData.append('file', uploadFile)
+
+      const response = await fetch(materialsUploadApiUrl, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      await fetchData({ silent: true })
+      setUploadFile(null)
+      setUploadMessage('업로드 완료: 드라이브에 파일이 저장되었습니다.')
+    } catch {
+      setUploadMessage('업로드 실패: API(앱스스크립트) 업로드 엔드포인트를 확인해 주세요.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
   const breadcrumb = getBreadcrumb(selection, tree)
   const previewUrl = previewFile ? getPreviewUrl(previewFile) : null
 
@@ -659,14 +702,37 @@ function App() {
               <div className="content-header">
                 <p className="breadcrumb-label">현재 위치</p>
                 <h2>{breadcrumb}</h2>
-                <div className="summary-chips">
-                  <span className="summary-chip">파일 {visibleFiles.length}개</span>
-                  {selectedFolderNode?.url && (
-                    <a className="summary-chip link" href={selectedFolderNode.url} target="_blank" rel="noopener noreferrer">
-                      원본 폴더 열기
-                    </a>
+                <div className="materials-toolbar">
+                  <div className="summary-chips">
+                    <span className="summary-chip">파일 {visibleFiles.length}개</span>
+                    {selectedFolderNode?.url && (
+                      <a className="summary-chip link" href={selectedFolderNode.url} target="_blank" rel="noopener noreferrer">
+                        원본 폴더 열기
+                      </a>
+                    )}
+                  </div>
+
+                  {materialsUploadEnabled && (
+                    <div className="materials-upload">
+                      <label className="upload-file-label">
+                        <input
+                          type="file"
+                          onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
+                          disabled={isUploading}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="action-button primary"
+                        disabled={isUploading || !uploadFile || !selectedFolderPath}
+                        onClick={() => void handleUploadToDrive()}
+                      >
+                        {isUploading ? '업로드 중...' : '드라이브 업로드'}
+                      </button>
+                    </div>
                   )}
                 </div>
+                {materialsUploadEnabled && uploadMessage && <p className="upload-message">{uploadMessage}</p>}
               </div>
 
               {isLoading && <div className="state-box">자료를 불러오는 중입니다...</div>}
@@ -758,6 +824,9 @@ function App() {
 }
 
 export default App
+
+
+
 
 
 

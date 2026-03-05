@@ -20,6 +20,8 @@ npm run dev
 VITE_API_URL=https://script.google.com/macros/s/DRIVE_WEBAPP_ID/exec
 VITE_EVENTS_API_URL=https://script.google.com/macros/s/EVENTS_WEBAPP_ID/exec
 VITE_RESERVATION_API_URL=https://script.google.com/macros/s/RESERVATION_WEBAPP_ID/exec
+VITE_ENABLE_MATERIALS_UPLOAD=false
+VITE_MATERIALS_UPLOAD_API_URL=https://script.google.com/macros/s/DRIVE_UPLOAD_WEBAPP_ID/exec
 ```
 
 ## Apps Script 문서
@@ -45,3 +47,12 @@ npm run build
 배포 URL 형식:
 
 `https://<github-username>.github.io/<repo-name>/`
+
+
+## 과목 자료 업로드(A안)
+
+- `VITE_ENABLE_MATERIALS_UPLOAD=true` 로 설정하면 과목 자료 화면에 `드라이브 업로드` 버튼이 표시됩니다.
+- 롤백(즉시 끄기): `VITE_ENABLE_MATERIALS_UPLOAD=false` 로 변경 후 재배포하면 업로드 UI가 사라집니다.
+- 업로드 API가 준비되지 않으면 화면에 실패 메시지가 표시됩니다.
+
+

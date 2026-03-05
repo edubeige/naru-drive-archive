@@ -1884,3 +1884,53 @@ input:focus, button:focus-visible, a:focus-visible {
   }
 }
 
+
+/* Materials upload toolbar (A-option) */
+.materials-toolbar {
+  margin-top: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.materials-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.46rem;
+  flex-wrap: wrap;
+}
+
+.upload-file-label input[type='file'] {
+  border: 1px solid #bfd0f0;
+  border-radius: 10px;
+  padding: 0.36rem 0.44rem;
+  background: #fff;
+  color: #2a4a84;
+  font-size: 0.84rem;
+}
+
+.upload-message {
+  margin: 0.52rem 0 0;
+  font-size: 0.84rem;
+  color: #4e6692;
+}
+
+@media (max-width: 760px) {
+  .materials-toolbar {
+    align-items: stretch;
+  }
+
+  .materials-upload {
+    width: 100%;
+  }
+
+  .upload-file-label {
+    flex: 1;
+  }
+
+  .upload-file-label input[type='file'] {
+    width: 100%;
+  }
+}
