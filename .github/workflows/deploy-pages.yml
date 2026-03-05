@@ -1,4 +1,4 @@
-﻿name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VITE_EVENTS_API_URL: https://script.google.com/a/macros/naru.es.kr/s/AKfycbxQIRBA_Qsu_H1QTEIAOdgPT1K9f4fVwfj738ddToR6WwJGsnR6wDhwV9whVLROk1_X8g/exec
     steps:
       - name: Checkout
         uses: actions/checkout@v4
