@@ -616,3 +616,276 @@ input {
     min-height: 55vh;
   }
 }
+
+.sidebar-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.sidebar-tab {
+  border: 1px solid #c3d4f5;
+  border-radius: 11px;
+  background: linear-gradient(180deg, #fff, #f4f8ff);
+  color: #33588f;
+  font-weight: 700;
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+}
+
+.sidebar-tab.active {
+  background: linear-gradient(145deg, #2d66d7, #1e4caf);
+  color: #fff;
+  border-color: transparent;
+}
+
+.home-sidebar-note {
+  border: 1px solid #d6e3fb;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff, #f7fbff);
+  padding: 0.85rem;
+}
+
+.home-sidebar-note h2 {
+  margin: 0 0 0.45rem;
+  font-size: 0.95rem;
+}
+
+.home-sidebar-note p {
+  margin: 0.3rem 0;
+  color: #5d749f;
+  font-size: 0.86rem;
+}
+
+.home-dashboard {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.home-header {
+  border: 1px solid #d4e1fa;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #ffffff 0%, #f5f9ff 100%);
+  padding: 1rem;
+}
+
+.home-kicker {
+  margin: 0;
+  color: #5b7fb7;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.home-header h2 {
+  margin: 0.25rem 0 0.35rem;
+}
+
+.home-header p {
+  margin: 0;
+  color: #62749a;
+}
+
+.home-card {
+  border: 1px solid #d4e1fa;
+  border-radius: 16px;
+  background: #fff;
+  padding: 0.9rem;
+  box-shadow: 0 10px 24px rgba(28, 67, 144, 0.08);
+}
+
+.home-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.65rem;
+}
+
+.home-card-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.inline-form.two-col {
+  grid-template-columns: 190px 1fr auto;
+}
+
+.inline-form input {
+  border: 1px solid #c3d4f5;
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+}
+
+.empty-text {
+  margin: 0;
+  color: #6e82a8;
+}
+
+.major-events-list,
+.schedule-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.major-events-list li,
+.schedule-list li {
+  border: 1px solid #d8e3f8;
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+  background: #f8fbff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.major-events-list button,
+.schedule-list button {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.28rem 0.55rem;
+  background: #e8efff;
+  color: #2a4d86;
+  cursor: pointer;
+}
+
+.schedule-list strong {
+  display: block;
+}
+
+.schedule-list p {
+  margin: 0.16rem 0 0;
+  color: #6f83a8;
+  font-size: 0.82rem;
+}
+
+.calendar-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.55rem;
+}
+
+.calendar-nav button {
+  border: 1px solid #c2d4f6;
+  border-radius: 9px;
+  background: #fff;
+  width: 32px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border: 1px solid #d9e3f6;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 0.55rem;
+}
+
+.weekday-cell {
+  padding: 0.45rem;
+  text-align: center;
+  font-weight: 700;
+  color: #4f6690;
+  background: #f3f7ff;
+  border-bottom: 1px solid #d9e3f6;
+}
+
+.day-cell {
+  min-height: 92px;
+  padding: 0.36rem;
+  border-right: 1px solid #edf2fe;
+  border-bottom: 1px solid #edf2fe;
+  background: #fff;
+}
+
+.day-cell:nth-child(7n) {
+  border-right: 0;
+}
+
+.day-cell.dimmed {
+  background: #f7f9fd;
+  color: #95a3bf;
+}
+
+.day-cell.today .day-top {
+  background: #2053b6;
+  color: #fff;
+}
+
+.day-top {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.day-events {
+  margin-top: 0.2rem;
+  display: grid;
+  gap: 0.16rem;
+}
+
+.day-events p {
+  margin: 0;
+  font-size: 0.74rem;
+  padding: 0.08rem 0.28rem;
+  background: #eaf1ff;
+  border-radius: 7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.monthly-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #5f7399;
+  font-size: 0.86rem;
+}
+
+.backend-note {
+  border: 1px dashed #b9caec;
+  border-radius: 13px;
+  background: #fbfdff;
+  padding: 0.9rem;
+}
+
+.backend-note h4 {
+  margin: 0 0 0.4rem;
+}
+
+.backend-note p {
+  margin: 0.28rem 0;
+  color: #61779e;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 760px) {
+  .inline-form,
+  .inline-form.two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .day-cell {
+    min-height: 78px;
+  }
+}
