@@ -71,13 +71,6 @@ export default function HomeDashboard() {
 
   const monthCells = useMemo(() => buildMonthGrid(calendarMonth), [calendarMonth])
 
-  const monthlySchedules = useMemo(() => {
-    const year = calendarMonth.getFullYear()
-    const month = `${calendarMonth.getMonth() + 1}`.padStart(2, '0')
-    const prefix = `${year}-${month}-`
-    return sortScheduleEvents(scheduleEvents.filter((event) => event.date.startsWith(prefix)))
-  }, [calendarMonth, scheduleEvents])
-
   const selectedDateEvents = useMemo(() => {
     if (!selectedDateKey) {
       return []
@@ -300,18 +293,6 @@ export default function HomeDashboard() {
           <h3>일정 캘린더</h3>
           <button type="button" className="action-button" onClick={goCurrentMonth}>오늘</button>
         </div>
-
-        <div className="home-metrics">
-          <div className="home-metric-card">
-            <span>이번 달 일정</span>
-            <strong>{monthlySchedules.length}건</strong>
-          </div>
-          <div className="home-metric-card">
-            <span>오늘 일정</span>
-            <strong>{(eventsByDate.get(toDateKey(new Date())) ?? []).length}건</strong>
-          </div>
-        </div>
-
         <div className="inline-form two-col">
           <input
             type="date"
@@ -481,3 +462,6 @@ export default function HomeDashboard() {
     </section>
   )
 }
+
+
+
