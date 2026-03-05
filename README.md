@@ -27,7 +27,7 @@ VITE_MATERIALS_UPLOAD_API_URL=https://script.google.com/macros/s/DRIVE_UPLOAD_WE
 ## Apps Script 문서
 
 - 이벤트/캘린더 API: [docs/apps-script-events/README.md](./docs/apps-script-events/README.md)
-- 물품 예약 API: [docs/apps-script-reservations/README.md](./docs/apps-script-reservations/README.md)
+- 물품 예약 API: [docs/apps-script-reservations/README.md](./docs/apps-script-reservations/README.md)`r`n- 과목 업로드 API(A안): [docs/apps-script-drive-upload/README.md](./docs/apps-script-drive-upload/README.md)
 
 ## 테스트 / 빌드
 
@@ -54,5 +54,6 @@ npm run build
 - `VITE_ENABLE_MATERIALS_UPLOAD=true` 로 설정하면 과목 자료 화면에 `드라이브 업로드` 버튼이 표시됩니다.
 - 롤백(즉시 끄기): `VITE_ENABLE_MATERIALS_UPLOAD=false` 로 변경 후 재배포하면 업로드 UI가 사라집니다.
 - 업로드 API가 준비되지 않으면 화면에 실패 메시지가 표시됩니다.
+
 
 

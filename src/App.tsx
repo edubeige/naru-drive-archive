@@ -78,6 +78,24 @@ function writeMaterialsCache(items: DriveItemRaw[]): void {
     // ignore localStorage errors
   }
 }
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const raw = typeof reader.result === 'string' ? reader.result : ''
+      const base64 = raw.includes(',') ? raw.split(',')[1] : raw
+      if (!base64) {
+        reject(new Error('파일 인코딩 실패'))
+        return
+      }
+      resolve(base64)
+    }
+    reader.onerror = () => reject(new Error('파일 읽기 실패'))
+    reader.readAsDataURL(file)
+  })
+}
+
 function hasSemesterChildren(subject: FolderNode): boolean {
   return subject.childrenFolders.some((child) => SEMESTER_NAMES.includes(child.name))
 }
@@ -452,14 +470,21 @@ function App() {
     setUploadMessage(null)
 
     try {
-      const formData = new FormData()
-      formData.append('action', 'uploadFile')
-      formData.append('targetPath', selectedFolderPath)
-      formData.append('file', uploadFile)
+      const base64 = await fileToBase64(uploadFile)
+      const payload = new URLSearchParams({
+        action: 'uploadFile',
+        targetPath: selectedFolderPath,
+        fileName: uploadFile.name,
+        mimeType: uploadFile.type || 'application/octet-stream',
+        fileBase64: base64,
+      })
 
       const response = await fetch(materialsUploadApiUrl, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        },
+        body: payload.toString(),
       })
 
       if (!response.ok) {
@@ -824,6 +849,9 @@ function App() {
 }
 
 export default App
+
+
+
 
 
 
