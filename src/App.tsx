@@ -164,6 +164,7 @@ function App() {
     lessonPath: null,
   })
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set())
+  const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set())
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -201,11 +202,12 @@ function App() {
   const files = selectedFolderNode?.files ?? []
 
   const visibleFiles = useMemo(() => {
-    if (!navQuery.trim()) {
+    const query = navQuery.trim()
+    if (!query) {
       return files
     }
 
-    return files.filter((file) => includesText(file.name, navQuery.trim()))
+    return files.filter((file) => includesText(file.name, query))
   }, [files, navQuery])
 
   const visibleSubjects = useMemo(() => {
@@ -248,12 +250,13 @@ function App() {
       const nextSelection = createSelectionForSubject(nextTree.subjects[0])
       setSelection(nextSelection)
 
-      const nextExpanded = new Set<string>()
+      const nextExpandedUnits = new Set<string>()
       if (nextSelection.unitPath) {
-        nextExpanded.add(nextSelection.unitPath)
+        nextExpandedUnits.add(nextSelection.unitPath)
       }
 
-      setExpandedUnits(nextExpanded)
+      setExpandedUnits(nextExpandedUnits)
+      setExpandedSubjects(new Set(nextTree.subjects.map((subject) => subject.fullPath)))
     } catch {
       setError('자료를 불러오지 못했습니다. 네트워크 상태 또는 API URL을 확인해 주세요.')
       setTree(null)
@@ -279,12 +282,37 @@ function App() {
     const nextSelection = createSelectionForSubject(subject)
     setSelection(nextSelection)
 
-    const nextExpanded = new Set<string>()
+    const nextExpandedUnits = new Set<string>()
     if (nextSelection.unitPath) {
-      nextExpanded.add(nextSelection.unitPath)
+      nextExpandedUnits.add(nextSelection.unitPath)
     }
 
-    setExpandedUnits(nextExpanded)
+    setExpandedUnits(nextExpandedUnits)
+    setExpandedSubjects((prev) => {
+      const next = new Set(prev)
+      next.add(subjectPath)
+      return next
+    })
+  }
+
+  const toggleSubject = (subjectPath: string) => {
+    setExpandedSubjects((prev) => {
+      const next = new Set(prev)
+      if (next.has(subjectPath)) {
+        next.delete(subjectPath)
+      } else {
+        next.add(subjectPath)
+      }
+      return next
+    })
+  }
+
+  const expandAllSubjects = () => {
+    setExpandedSubjects(new Set((tree?.subjects ?? []).map((subject) => subject.fullPath)))
+  }
+
+  const collapseAllSubjects = () => {
+    setExpandedSubjects(new Set())
   }
 
   const handleSemesterClick = (semesterPath: string) => {
@@ -307,12 +335,12 @@ function App() {
       lessonPath: firstLesson?.fullPath ?? null,
     }))
 
-    const nextExpanded = new Set<string>()
+    const nextExpandedUnits = new Set<string>()
     if (firstUnit) {
-      nextExpanded.add(firstUnit.fullPath)
+      nextExpandedUnits.add(firstUnit.fullPath)
     }
 
-    setExpandedUnits(nextExpanded)
+    setExpandedUnits(nextExpandedUnits)
   }
 
   const handleUnitClick = (unitPath: string) => {
@@ -390,15 +418,21 @@ function App() {
               >
                 {semesterName}
               </button>
-            )
-          })}
+            )}
+          )}
         </div>
       </header>
 
       <div className="layout">
         <aside className={`lnb ${isSidebarOpen ? 'open' : ''}`}>
           <section>
-            <h2>과목 탐색</h2>
+            <div className="nav-title-row">
+              <h2>과목 탐색</h2>
+              <div className="nav-fold-actions">
+                <button type="button" onClick={expandAllSubjects}>전체 펼침</button>
+                <button type="button" onClick={collapseAllSubjects}>전체 접기</button>
+              </div>
+            </div>
             <input
               className="nav-search"
               value={navQuery}
@@ -410,21 +444,32 @@ function App() {
             <ul className="subject-list">
               {visibleSubjects.map((subject) => {
                 const isActiveSubject = selection.subjectPath === subject.fullPath
+                const isSubjectExpanded = expandedSubjects.has(subject.fullPath) || !!navQuery.trim()
                 const semesterNodes = getSemesterNodes(subject)
                 const baseNodes = semesterNodes.length ? semesterNodes : [subject]
                 const visibleBaseNodes = baseNodes.filter((baseNode) => folderMatches(baseNode, navQuery.trim()))
 
                 return (
                   <li key={subject.fullPath} className="subject-item">
-                    <button
-                      type="button"
-                      className={`subject-button ${isActiveSubject ? 'active' : ''}`}
-                      onClick={() => handleSubjectClick(subject.fullPath)}
-                    >
-                      <span>{subject.name}</span>
-                    </button>
+                    <div className="subject-head">
+                      <button
+                        type="button"
+                        className={`subject-button ${isActiveSubject ? 'active' : ''}`}
+                        onClick={() => handleSubjectClick(subject.fullPath)}
+                      >
+                        <span>{subject.name}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="subject-toggle"
+                        aria-label={`${subject.name} 접기/펼치기`}
+                        onClick={() => toggleSubject(subject.fullPath)}
+                      >
+                        {isSubjectExpanded ? '▾' : '▸'}
+                      </button>
+                    </div>
 
-                    {isActiveSubject && (
+                    {isSubjectExpanded && (
                       <ul className="semester-list">
                         {visibleBaseNodes.map((baseNode) => {
                           const isSemester = baseNode.fullPath !== subject.fullPath
@@ -446,7 +491,7 @@ function App() {
                               {!!unitNodes.length && (
                                 <ul className="unit-list">
                                   {unitNodes.map((unit) => {
-                                    const isExpanded = expandedUnits.has(unit.fullPath)
+                                    const isExpanded = expandedUnits.has(unit.fullPath) || !!navQuery.trim()
                                     const isUnitActive = selection.unitPath === unit.fullPath
                                     const lessons = unit.childrenFolders.filter((lesson) =>
                                       includesText(lesson.name, navQuery.trim()) || !navQuery.trim(),
@@ -512,7 +557,6 @@ function App() {
           </div>
 
           {isLoading && <div className="state-box">자료를 불러오는 중입니다...</div>}
-
           {!isLoading && error && (
             <div className="state-box error">
               <p>{error}</p>
@@ -521,12 +565,8 @@ function App() {
               </button>
             </div>
           )}
-
           {!isLoading && !error && !tree && <div className="state-box">표시할 자료가 없습니다.</div>}
-
-          {!isLoading && !error && tree && !visibleFiles.length && (
-            <div className="state-box">조건에 맞는 파일이 없습니다.</div>
-          )}
+          {!isLoading && !error && tree && !visibleFiles.length && <div className="state-box">조건에 맞는 파일이 없습니다.</div>}
 
           {!isLoading && !error && !!visibleFiles.length && (
             <section className="file-list" aria-label="자료 목록">
@@ -559,21 +599,21 @@ function App() {
                       </button>
                       <a
                         className="action-button"
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${file.name} 새 창`}
-                      >
-                        새 창
-                      </a>
-                      <a
-                        className="action-button"
                         href={getDownloadUrl(file)}
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`${file.name} 다운로드`}
                       >
                         다운로드
+                      </a>
+                      <a
+                        className="action-button"
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${file.name} 새 창`}
+                      >
+                        새 창
                       </a>
                     </div>
                   </article>
