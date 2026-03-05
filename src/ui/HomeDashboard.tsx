@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { eventsRepository, type MajorEventItem, type ScheduleEventItem } from '../lib/eventsStore'
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
@@ -6,7 +6,6 @@ const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 function buildMonthGrid(viewDate: Date): Date[] {
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
-
   const firstDay = new Date(year, month, 1)
   const startOffset = firstDay.getDay()
   const startDate = new Date(year, month, 1 - startOffset)
@@ -32,12 +31,28 @@ function sortScheduleEvents(items: ScheduleEventItem[]): ScheduleEventItem[] {
   })
 }
 
+function formatDateLabel(dateKey: string): string {
+  const date = new Date(`${dateKey}T00:00:00`)
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  }).format(date)
+}
+
 export default function HomeDashboard() {
   const [majorEvents, setMajorEvents] = useState<MajorEventItem[]>([])
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEventItem[]>([])
   const [majorInput, setMajorInput] = useState('')
   const [scheduleTitleInput, setScheduleTitleInput] = useState('')
   const [scheduleDateInput, setScheduleDateInput] = useState('')
+
+  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null)
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const [popupAddTitle, setPopupAddTitle] = useState('')
+  const [editTitle, setEditTitle] = useState('')
+  const [isEditingEvent, setIsEditingEvent] = useState(false)
+
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
@@ -52,7 +67,6 @@ export default function HomeDashboard() {
       current.push(event)
       map.set(event.date, current)
     })
-
     return map
   }, [scheduleEvents])
 
@@ -62,8 +76,22 @@ export default function HomeDashboard() {
     const year = calendarMonth.getFullYear()
     const month = `${calendarMonth.getMonth() + 1}`.padStart(2, '0')
     const prefix = `${year}-${month}-`
-    return scheduleEvents.filter((event) => event.date.startsWith(prefix))
+    return sortScheduleEvents(scheduleEvents.filter((event) => event.date.startsWith(prefix)))
   }, [calendarMonth, scheduleEvents])
+
+  const selectedDateEvents = useMemo(() => {
+    if (!selectedDateKey) {
+      return []
+    }
+    return sortScheduleEvents(eventsByDate.get(selectedDateKey) ?? [])
+  }, [eventsByDate, selectedDateKey])
+
+  const selectedEvent = useMemo(() => {
+    if (!selectedEventId) {
+      return null
+    }
+    return scheduleEvents.find((event) => event.id === selectedEventId) ?? null
+  }, [scheduleEvents, selectedEventId])
 
   const refreshEvents = async () => {
     try {
@@ -87,11 +115,7 @@ export default function HomeDashboard() {
     }
 
     const tempId = `temp_major_${Date.now()}`
-    const optimisticEvent: MajorEventItem = {
-      id: tempId,
-      title,
-      createdAt: new Date().toISOString(),
-    }
+    const optimisticEvent: MajorEventItem = { id: tempId, title, createdAt: new Date().toISOString() }
 
     setMajorEvents((prev) => [optimisticEvent, ...prev])
     setMajorInput('')
@@ -109,29 +133,26 @@ export default function HomeDashboard() {
     }
   }
 
-  const addScheduleEvent = async () => {
-    const date = scheduleDateInput.trim()
-    const title = scheduleTitleInput.trim()
-
-    if (!date || !title) {
+  const addScheduleEvent = async (date: string, title: string) => {
+    const trimmedDate = date.trim()
+    const trimmedTitle = title.trim()
+    if (!trimmedDate || !trimmedTitle) {
       return
     }
 
     const tempId = `temp_schedule_${Date.now()}`
     const optimisticEvent: ScheduleEventItem = {
       id: tempId,
-      date,
-      title,
+      date: trimmedDate,
+      title: trimmedTitle,
       createdAt: new Date().toISOString(),
     }
 
     setScheduleEvents((prev) => sortScheduleEvents([...prev, optimisticEvent]))
-    setScheduleDateInput('')
-    setScheduleTitleInput('')
     setBusy(true)
 
     try {
-      const created = await eventsRepository.addScheduleEvent(date, title)
+      const created = await eventsRepository.addScheduleEvent(trimmedDate, trimmedTitle)
       setScheduleEvents((prev) => sortScheduleEvents(prev.map((event) => (event.id === tempId ? created : event))))
       setError(null)
     } catch (e) {
@@ -140,6 +161,23 @@ export default function HomeDashboard() {
     } finally {
       setBusy(false)
     }
+  }
+
+  const handleTopAddSchedule = async () => {
+    const date = scheduleDateInput.trim()
+    const title = scheduleTitleInput.trim()
+    await addScheduleEvent(date, title)
+    setScheduleDateInput('')
+    setScheduleTitleInput('')
+  }
+
+  const handlePopupAddSchedule = async () => {
+    if (!selectedDateKey) {
+      return
+    }
+    const title = popupAddTitle.trim()
+    await addScheduleEvent(selectedDateKey, title)
+    setPopupAddTitle('')
   }
 
   const removeMajorEvent = async (id: string) => {
@@ -158,6 +196,64 @@ export default function HomeDashboard() {
     }
   }
 
+  const removeScheduleEvent = async (id: string) => {
+    const previous = scheduleEvents
+    setScheduleEvents((prev) => prev.filter((event) => event.id !== id))
+    setBusy(true)
+
+    try {
+      await eventsRepository.removeScheduleEvent(id)
+      setSelectedEventId((prev) => (prev === id ? null : prev))
+      setError(null)
+    } catch (e) {
+      setScheduleEvents(previous)
+      setError(e instanceof Error ? e.message : '일정 삭제에 실패했습니다.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const startEditEvent = (event: ScheduleEventItem) => {
+    setSelectedEventId(event.id)
+    setSelectedDateKey(event.date)
+    setEditTitle(event.title)
+    setIsEditingEvent(true)
+  }
+
+  const cancelEditEvent = () => {
+    setIsEditingEvent(false)
+    setEditTitle('')
+  }
+
+  const saveEditEvent = async () => {
+    if (!selectedEvent) {
+      return
+    }
+
+    const nextTitle = editTitle.trim()
+    if (!nextTitle) {
+      return
+    }
+
+    const previous = scheduleEvents
+    const optimistic = { ...selectedEvent, title: nextTitle }
+
+    setScheduleEvents((prev) => sortScheduleEvents(prev.map((item) => (item.id === selectedEvent.id ? optimistic : item))))
+    setBusy(true)
+
+    try {
+      const updated = await eventsRepository.updateScheduleEvent(selectedEvent.id, selectedEvent.date, nextTitle)
+      setScheduleEvents((prev) => sortScheduleEvents(prev.map((item) => (item.id === selectedEvent.id ? updated : item))))
+      setIsEditingEvent(false)
+      setError(null)
+    } catch (e) {
+      setScheduleEvents(previous)
+      setError(e instanceof Error ? e.message : '일정 수정에 실패했습니다.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const moveMonth = (offset: number) => {
     setCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + offset, 1))
   }
@@ -165,6 +261,22 @@ export default function HomeDashboard() {
   const goCurrentMonth = () => {
     const now = new Date()
     setCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1))
+  }
+
+  const openDatePopup = (dateKey: string) => {
+    setSelectedDateKey(dateKey)
+    setSelectedEventId(null)
+    setPopupAddTitle('')
+    setIsEditingEvent(false)
+    setEditTitle('')
+  }
+
+  const closePopups = () => {
+    setSelectedDateKey(null)
+    setSelectedEventId(null)
+    setPopupAddTitle('')
+    setIsEditingEvent(false)
+    setEditTitle('')
   }
 
   return (
@@ -227,7 +339,7 @@ export default function HomeDashboard() {
             placeholder="행사명"
             aria-label="일정 행사명"
           />
-          <button type="button" className="action-button primary" onClick={() => void addScheduleEvent()} disabled={busy}>
+          <button type="button" className="action-button primary" onClick={() => void handleTopAddSchedule()} disabled={busy}>
             일정 추가
           </button>
         </div>
@@ -252,7 +364,13 @@ export default function HomeDashboard() {
             const isToday = key === toDateKey(new Date())
 
             return (
-              <div key={key} className={`day-cell ${isCurrentMonth ? '' : 'dimmed'} ${isToday ? 'today' : ''}`}>
+              <button
+                key={key}
+                type="button"
+                className={`day-cell ${isCurrentMonth ? '' : 'dimmed'} ${isToday ? 'today' : ''}`}
+                onClick={() => openDatePopup(key)}
+                aria-label={`${key} 일정 보기`}
+              >
                 <div className="day-top">{date.getDate()}</div>
                 <div className="day-events">
                   {events.slice(0, 3).map((event) => (
@@ -260,7 +378,7 @@ export default function HomeDashboard() {
                   ))}
                   {events.length > 3 && <p>+{events.length - 3}개</p>}
                 </div>
-              </div>
+              </button>
             )
           })}
         </div>
@@ -275,11 +393,114 @@ export default function HomeDashboard() {
 
       <article className="backend-note">
         <h4>서버 저장 안내</h4>
-        <p>
-          현재 일정은 `VITE_EVENTS_API_URL`로 지정한 Apps Script API에 저장됩니다.
-          6명이 함께 사용 가능한 공유 저장 구조입니다.
-        </p>
+        <p>현재 일정은 `VITE_EVENTS_API_URL`로 지정한 Apps Script API에 저장됩니다.</p>
       </article>
+
+      {selectedDateKey && (
+        <div className="calendar-overlay" onClick={closePopups}>
+          <section className="calendar-modal" role="dialog" aria-label="날짜 일정" onClick={(event) => event.stopPropagation()}>
+            <header className="calendar-modal-head">
+              <div>
+                <h3>{formatDateLabel(selectedDateKey)} 일정</h3>
+                <p>{selectedDateKey}</p>
+              </div>
+              <button type="button" className="close-button" onClick={closePopups} aria-label="닫기">✕</button>
+            </header>
+
+            <div className="calendar-modal-body">
+              {!selectedDateEvents.length && <p className="empty-text">등록된 일정이 없습니다.</p>}
+              {!!selectedDateEvents.length && (
+                <ul className="popup-event-list">
+                  {selectedDateEvents.map((event) => (
+                    <li key={event.id}>
+                      <button
+                        type="button"
+                        className="popup-event-item"
+                        onClick={() => {
+                          setSelectedEventId(event.id)
+                          setIsEditingEvent(false)
+                          setEditTitle('')
+                        }}
+                      >
+                        {event.title}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="popup-add-form">
+                <input
+                  value={popupAddTitle}
+                  onChange={(event) => setPopupAddTitle(event.target.value)}
+                  placeholder="이 날짜에 추가할 일정"
+                  aria-label="선택 날짜 일정 추가"
+                />
+                <button type="button" className="action-button primary" onClick={() => void handlePopupAddSchedule()} disabled={busy}>
+                  추가
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {selectedEvent && (
+        <div className="calendar-overlay" onClick={() => { setSelectedEventId(null); setIsEditingEvent(false) }}>
+          <section className="calendar-modal detail" role="dialog" aria-label="일정 상세" onClick={(event) => event.stopPropagation()}>
+            <header className="calendar-modal-head">
+              <div>
+                <h3>일정 상세</h3>
+                <p>{formatDateLabel(selectedEvent.date)}</p>
+              </div>
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => { setSelectedEventId(null); setIsEditingEvent(false) }}
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </header>
+
+            <div className="calendar-modal-body">
+              {!isEditingEvent && <p className="event-full-title">{selectedEvent.title}</p>}
+
+              {isEditingEvent && (
+                <div className="popup-add-form single">
+                  <input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} aria-label="일정 제목 수정" />
+                </div>
+              )}
+
+              <div className="popup-actions">
+                {!isEditingEvent && (
+                  <button type="button" className="action-button" onClick={() => startEditEvent(selectedEvent)} disabled={busy}>
+                    수정
+                  </button>
+                )}
+                {isEditingEvent && (
+                  <>
+                    <button type="button" className="action-button primary" onClick={() => void saveEditEvent()} disabled={busy}>
+                      저장
+                    </button>
+                    <button type="button" className="action-button" onClick={cancelEditEvent} disabled={busy}>
+                      취소
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  className="action-button danger"
+                  onClick={() => void removeScheduleEvent(selectedEvent.id)}
+                  disabled={busy}
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   )
 }

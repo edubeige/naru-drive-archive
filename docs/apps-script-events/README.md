@@ -1,4 +1,4 @@
-# Apps Script Events Setup
+﻿# Apps Script Events Setup
 
 ## 1) 새 Google Sheet 생성
 - 파일명 예시: `naru-events-db`
@@ -62,3 +62,10 @@ VITE_EVENTS_API_URL=https://script.google.com/macros/s/XXXXXXXXXXXX/exec
 ### removeScheduleEvent
 - `action=removeScheduleEvent`
 - `id=schedule_xxx`
+
+### updateScheduleEvent
+- ction=updateScheduleEvent`r
+- id=schedule_xxx`r
+- date=2026-03-11`r
+- 	itle=수정된 일정명
+

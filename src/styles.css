@@ -889,3 +889,132 @@ input {
     min-height: 78px;
   }
 }
+
+.day-cell {
+  border: 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.day-cell:hover {
+  background: #f6f9ff;
+}
+
+.calendar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(12, 20, 35, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.calendar-modal {
+  width: min(560px, 94vw);
+  max-height: 88vh;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #d6e2fa;
+  border-radius: 16px;
+  box-shadow: 0 20px 44px rgba(8, 22, 50, 0.24);
+}
+
+.calendar-modal.detail {
+  width: min(520px, 94vw);
+}
+
+.calendar-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 1rem;
+  border-bottom: 1px solid #e2ebfd;
+}
+
+.calendar-modal-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.calendar-modal-head p {
+  margin: 0.3rem 0 0;
+  color: #6077a1;
+  font-size: 0.9rem;
+}
+
+.calendar-modal-body {
+  padding: 0.95rem 1rem 1rem;
+}
+
+.popup-event-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.popup-event-item {
+  width: 100%;
+  border: 1px solid #d7e4fb;
+  border-radius: 10px;
+  background: #f7faff;
+  text-align: left;
+  padding: 0.56rem 0.62rem;
+  color: #223e72;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.popup-event-item:hover {
+  background: #ecf3ff;
+}
+
+.popup-add-form {
+  margin-top: 0.7rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+.popup-add-form.single {
+  grid-template-columns: 1fr;
+}
+
+.popup-add-form input {
+  border: 1px solid #c3d4f5;
+  border-radius: 10px;
+  padding: 0.52rem 0.66rem;
+}
+
+.event-full-title {
+  margin: 0;
+  border: 1px solid #d7e3fb;
+  border-radius: 11px;
+  background: #f8fbff;
+  padding: 0.65rem;
+  color: #1f3665;
+  font-weight: 700;
+}
+
+.popup-actions {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.action-button.danger {
+  border-color: #e2b5b5;
+  color: #8f3434;
+  background: linear-gradient(180deg, #fff7f7, #ffecec);
+}
+
+@media (max-width: 760px) {
+  .popup-add-form {
+    grid-template-columns: 1fr;
+  }
+}

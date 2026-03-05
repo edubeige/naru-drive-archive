@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Events API for Home Dashboard
  *
  * Spreadsheet tabs required:
@@ -61,6 +61,9 @@ function doPost(e) {
 
       case 'addScheduleEvent':
         return jsonResponse({ success: true, data: addScheduleEvent(ss, body.date, body.title) });
+
+      case 'updateScheduleEvent':
+        return jsonResponse({ success: true, data: updateScheduleEvent(ss, body.id, body.date, body.title) });
 
       case 'removeScheduleEvent':
         removeScheduleEvent(ss, body.id);
@@ -252,6 +255,48 @@ function removeMajorEvent(ss, id) {
   deleteById(sheet, targetId, 1);
 }
 
+function updateScheduleEvent(ss, id, date, title) {
+  const targetId = String(id || '').trim();
+  const trimmedDate = String(date || '').trim();
+  const trimmedTitle = String(title || '').trim();
+
+  if (!targetId) {
+    throw new Error('id is required');
+  }
+  if (!trimmedDate) {
+    throw new Error('date is required');
+  }
+  if (!trimmedTitle) {
+    throw new Error('title is required');
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmedDate)) {
+    throw new Error('date must be YYYY-MM-DD');
+  }
+
+  const sheet = ss.getSheetByName(SHEET_SCHEDULE);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    throw new Error('schedule event not found');
+  }
+
+  const rows = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+  for (let i = 0; i < rows.length; i++) {
+    if (String(rows[i][0]) === targetId) {
+      sheet.getRange(i + 2, 2).setValue(trimmedDate);
+      sheet.getRange(i + 2, 2).setNumberFormat('@');
+      sheet.getRange(i + 2, 3).setValue(trimmedTitle);
+
+      return {
+        id: targetId,
+        date: trimmedDate,
+        title: trimmedTitle,
+        createdAt: rows[i][3],
+      };
+    }
+  }
+
+  throw new Error('schedule event not found');
+}
 function removeScheduleEvent(ss, id) {
   const targetId = String(id || '').trim();
   if (!targetId) {

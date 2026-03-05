@@ -1,4 +1,4 @@
-export interface MajorEventItem {
+﻿export interface MajorEventItem {
   id: string
   title: string
   createdAt: string
@@ -21,6 +21,7 @@ export interface EventsRepository {
   addMajorEvent(title: string): Promise<MajorEventItem>
   removeMajorEvent(id: string): Promise<void>
   addScheduleEvent(date: string, title: string): Promise<ScheduleEventItem>
+  updateScheduleEvent(id: string, date: string, title: string): Promise<ScheduleEventItem>
   removeScheduleEvent(id: string): Promise<void>
 }
 
@@ -32,6 +33,7 @@ interface ApiPayload {
     | 'addMajorEvent'
     | 'removeMajorEvent'
     | 'addScheduleEvent'
+    | 'updateScheduleEvent'
     | 'removeScheduleEvent'
   title?: string
   date?: string
@@ -166,6 +168,25 @@ class AppsScriptEventsRepository implements EventsRepository {
     }
 
     const res = await callApi({ action: 'addScheduleEvent', date: trimmedDate, title: trimmedTitle })
+    const normalized = normalizeScheduleEvent(res.data)
+
+    if (!normalized) {
+      throw new Error('Invalid schedule event response')
+    }
+
+    return normalized
+  }
+
+  async updateScheduleEvent(id: string, date: string, title: string): Promise<ScheduleEventItem> {
+    const trimmedId = id.trim()
+    const trimmedDate = date.trim()
+    const trimmedTitle = title.trim()
+
+    if (!trimmedId || !trimmedDate || !trimmedTitle) {
+      throw new Error('Schedule event id, date and title are required')
+    }
+
+    const res = await callApi({ action: 'updateScheduleEvent', id: trimmedId, date: trimmedDate, title: trimmedTitle })
     const normalized = normalizeScheduleEvent(res.data)
 
     if (!normalized) {
