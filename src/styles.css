@@ -1123,3 +1123,104 @@ input:focus, button:focus-visible, a:focus-visible {
     justify-content: flex-start;
   }
 }
+
+/* Calendar refresh: cleaner grid, stronger separation, weekend colors */
+.calendar-grid {
+  border: 1px solid #cfdcf4;
+  border-radius: 14px;
+  background: #f7faff;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.weekday-cell {
+  background: linear-gradient(180deg, #f3f7ff 0%, #eef4ff 100%);
+  color: #3e5686;
+  font-weight: 800;
+  padding: 0.58rem 0.45rem;
+  border-bottom: 1px solid #d4e2fb;
+}
+
+.weekday-cell:nth-child(1) {
+  color: #d64f4f;
+}
+
+.weekday-cell:nth-child(7) {
+  color: #3f66cc;
+}
+
+.day-cell {
+  min-height: 108px;
+  padding: 0.46rem 0.44rem 0.38rem;
+  border-right: 1px solid #dde8fb;
+  border-bottom: 1px solid #dde8fb;
+  background: #ffffff;
+  transition: background-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.day-cell:hover {
+  background: #f4f8ff;
+  box-shadow: inset 0 0 0 1px #bed3ff;
+}
+
+.day-cell.dimmed {
+  background: #f7f9fd;
+  color: #9dabc5;
+}
+
+.day-cell.sun .day-top {
+  color: #d64f4f;
+}
+
+.day-cell.sat .day-top {
+  color: #3f66cc;
+}
+
+.day-cell.today .day-top {
+  background: linear-gradient(145deg, #2f5fc4, #234b9b);
+  color: #fff;
+  box-shadow: 0 5px 10px rgba(35, 75, 155, 0.25);
+}
+
+.day-cell.selected {
+  background: #eef4ff;
+  box-shadow: inset 0 0 0 1.5px #95b5f8;
+}
+
+.day-events {
+  margin-top: 0.28rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.day-events p {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  padding: 0.14rem 0.42rem;
+  border-radius: 999px;
+  background: #eaf1ff;
+  color: #2a4f91;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid #d5e4ff;
+}
+
+.day-cell.sun .day-events p {
+  background: #fff0f0;
+  color: #a13f3f;
+  border-color: #f3d3d3;
+}
+
+.day-cell.sat .day-events p {
+  background: #edf3ff;
+  color: #385fb6;
+  border-color: #d7e3ff;
+}
+
+@media (max-width: 760px) {
+  .day-cell {
+    min-height: 88px;
+  }
+}
