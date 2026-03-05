@@ -1641,3 +1641,66 @@ input:focus, button:focus-visible, a:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* Today schedule highlight */
+.today-schedule-panel {
+  border: 1px solid #d6e3fb;
+  border-radius: var(--radius-md);
+  background: linear-gradient(150deg, #eef5ff 0%, #f8fbff 100%);
+  padding: 0.72rem 0.78rem;
+  margin-bottom: 0.72rem;
+}
+
+.today-schedule-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  margin-bottom: 0.5rem;
+}
+
+.today-schedule-head h4 {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #1d3b72;
+}
+
+.today-schedule-empty {
+  margin: 0;
+  color: #5f76a2;
+  font-size: 0.88rem;
+}
+
+.today-schedule-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.36rem;
+}
+
+.today-schedule-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid #d8e5fb;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 0.3rem 0.5rem;
+}
+
+.today-schedule-list strong {
+  color: #1d345f;
+  font-size: 0.86rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .today-schedule-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -109,6 +109,8 @@ export default function HomeDashboard() {
   }, [scheduleEvents])
 
   const monthCells = useMemo(() => buildMonthGrid(calendarMonth), [calendarMonth])
+  const todayKey = toDateKey(new Date())
+  const todayEvents = useMemo(() => sortScheduleEvents(eventsByDate.get(todayKey) ?? []), [eventsByDate, todayKey])
 
   const selectedDateEvents = useMemo(() => {
     if (!selectedDateKey) {
@@ -429,6 +431,35 @@ export default function HomeDashboard() {
           <h3>일정 캘린더</h3>
           <button type="button" className="action-button calendar-today-btn" onClick={goCurrentMonth}>오늘</button>
         </div>
+
+        <section className="today-schedule-panel" aria-label="오늘의 일정">
+          <div className="today-schedule-head">
+            <h4>오늘의 일정</h4>
+            <button
+              type="button"
+              className="summary-chip chip-button"
+              onClick={() => openDatePopup(todayKey)}
+            >
+              오늘 날짜 열기
+            </button>
+          </div>
+
+          {!todayEvents.length && <p className="today-schedule-empty">오늘 등록된 일정이 없습니다.</p>}
+
+          {!!todayEvents.length && (
+            <ul className="today-schedule-list">
+              {todayEvents.map((event) => (
+                <li key={event.id}>
+                  <span className={`event-color-badge ${event.color}`}>
+                    {SCHEDULE_COLOR_OPTIONS.find((x) => x.value === event.color)?.label ?? '하늘'}
+                  </span>
+                  <strong>{event.title}</strong>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         <div className="inline-form three-col">
           <input
             type="date"
@@ -469,7 +500,7 @@ export default function HomeDashboard() {
             const key = toDateKey(date)
             const events = eventsByDate.get(key) ?? []
             const isCurrentMonth = date.getMonth() === calendarMonth.getMonth()
-            const isToday = key === toDateKey(new Date())
+            const isToday = key === todayKey
             const isSelected = key === selectedDateKey
             const weekDay = date.getDay()
             const weekendClass = weekDay === 0 ? 'sun' : weekDay === 6 ? 'sat' : ''
@@ -494,7 +525,6 @@ export default function HomeDashboard() {
           })}
         </div>
       </article>
-
 
       {selectedDateKey && (
         <div className="calendar-overlay" onClick={closeDatePopup}>
@@ -618,10 +648,3 @@ export default function HomeDashboard() {
     </section>
   )
 }
-
-
-
-
-
-
-
