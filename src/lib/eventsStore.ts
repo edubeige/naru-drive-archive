@@ -1,4 +1,4 @@
-﻿export interface MajorEventItem {
+export interface MajorEventItem {
   id: string
   title: string
   createdAt: string
@@ -48,18 +48,27 @@ function ensureApiUrl(): string {
   if (!EVENTS_API_URL) {
     throw new Error('VITE_EVENTS_API_URL is not configured')
   }
-  return EVENTS_API_URL
+
+  // Workspace-domain URL can fail CORS preflight on GitHub Pages.
+  // Normalize to the public web app pattern when possible.
+  return EVENTS_API_URL.replace(
+    /https:\/\/script\.google\.com\/a\/macros\/[^/]+\/s\//,
+    'https://script.google.com/macros/s/',
+  )
 }
 
 async function callApi(payload: ApiPayload): Promise<ApiResponse> {
   const url = ensureApiUrl()
+  const form = new URLSearchParams()
+
+  form.set('action', payload.action)
+  if (payload.title) form.set('title', payload.title)
+  if (payload.date) form.set('date', payload.date)
+  if (payload.id) form.set('id', payload.id)
 
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
+    body: form,
   })
 
   if (!response.ok) {

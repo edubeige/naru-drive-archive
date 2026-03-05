@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Events API for Home Dashboard
  *
  * Spreadsheet tabs required:
@@ -11,8 +11,29 @@
 const SHEET_MAJOR = 'events_major';
 const SHEET_SCHEDULE = 'events_schedule';
 
-function doGet() {
-  return jsonResponse({ success: true, message: 'Events API is running' });
+function doGet(e) {
+  try {
+    const body = parseBody(e);
+    const action = (body.action || '').trim();
+
+    if (!action || action === 'health') {
+      return jsonResponse({ success: true, message: 'Events API is running' });
+    }
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    ensureSheets(ss);
+
+    if (action === 'getAll') {
+      return jsonResponse({ success: true, data: getAllData(ss) });
+    }
+
+    throw new Error('Unsupported GET action: ' + action);
+  } catch (err) {
+    return jsonResponse({
+      success: false,
+      message: err && err.message ? err.message : String(err),
+    });
+  }
 }
 
 function doPost(e) {
@@ -57,12 +78,23 @@ function doPost(e) {
 }
 
 function parseBody(e) {
-  if (!e || !e.postData || !e.postData.contents) {
-    return {};
+  const fromParams = e && e.parameter ? e.parameter : {};
+
+  // Form posts and query strings are parsed into e.parameter.
+  if (fromParams && Object.keys(fromParams).length > 0) {
+    return fromParams;
   }
 
-  const contents = e.postData.contents;
-  return JSON.parse(contents);
+  // JSON fallback.
+  if (e && e.postData && e.postData.contents) {
+    const contents = String(e.postData.contents || '').trim();
+    if (!contents) {
+      return {};
+    }
+    return JSON.parse(contents);
+  }
+
+  return {};
 }
 
 function jsonResponse(payload) {
