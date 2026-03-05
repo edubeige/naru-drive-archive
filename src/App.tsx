@@ -7,6 +7,7 @@ import {
   type DriveItemRaw,
   type DriveTree,
   type FileIconKey,
+  type FileItem,
   type FolderNode,
 } from './lib/driveTree'
 
@@ -55,9 +56,7 @@ function createSelectionForSubject(subject: FolderNode | undefined): SelectionSt
 
   const semesterNodes = getSemesterNodes(subject)
   const semesterPath = semesterNodes[0]?.fullPath ?? null
-  const baseNode = semesterPath
-    ? semesterNodes[0]
-    : subject
+  const baseNode = semesterPath ? semesterNodes[0] : subject
 
   const unitNode = baseNode?.childrenFolders[0]
   const lessonNode = unitNode?.childrenFolders[0]
@@ -100,6 +99,46 @@ function formatDate(isoDate: string): string {
   }).format(date)
 }
 
+function extractDriveFileId(url: string): string | null {
+  const byPath = /\/d\/([a-zA-Z0-9_-]+)/.exec(url)
+  if (byPath?.[1]) {
+    return byPath[1]
+  }
+
+  try {
+    const parsed = new URL(url)
+    const id = parsed.searchParams.get('id')
+    return id || null
+  } catch {
+    return null
+  }
+}
+
+function getDownloadUrl(file: FileItem): string {
+  const id = extractDriveFileId(file.url)
+  if (!id) {
+    return file.url
+  }
+
+  return `https://drive.google.com/uc?export=download&id=${id}`
+}
+
+function getPreviewUrl(file: FileItem): string | null {
+  const iconKey = getFileIconKey(file.ext || file.name)
+  const previewable = ['presentation', 'pdf', 'doc', 'sheet', 'video'].includes(iconKey)
+
+  if (!previewable) {
+    return null
+  }
+
+  const id = extractDriveFileId(file.url)
+  if (!id) {
+    return file.url
+  }
+
+  return `https://drive.google.com/file/d/${id}/preview`
+}
+
 function App() {
   const [tree, setTree] = useState<DriveTree | null>(null)
   const [selection, setSelection] = useState<SelectionState>({
@@ -108,10 +147,11 @@ function App() {
     unitPath: null,
     lessonPath: null,
   })
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set())
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null)
 
   const apiUrl = import.meta.env.VITE_API_URL || FALLBACK_API_URL
 
@@ -131,14 +171,6 @@ function App() {
     return getSemesterNodes(selectedSubject)
   }, [selectedSubject])
 
-  const activeBaseNode = useMemo(() => {
-    if (!tree || !selection.subjectPath) {
-      return null
-    }
-
-    const path = selection.semesterPath || selection.subjectPath
-    return tree.nodesByPath.get(path) ?? null
-  }, [tree, selection.semesterPath, selection.subjectPath])
 
   const selectedFolderPath = selection.lessonPath || selection.unitPath || selection.semesterPath || selection.subjectPath
 
@@ -186,7 +218,7 @@ function App() {
         nextExpanded.add(nextSelection.unitPath)
       }
 
-      setExpandedPaths(nextExpanded)
+      setExpandedUnits(nextExpanded)
     } catch {
       setError('자료를 불러오지 못했습니다. 네트워크 상태 또는 API URL을 확인해 주세요.')
       setTree(null)
@@ -216,8 +248,8 @@ function App() {
     if (nextSelection.unitPath) {
       nextExpanded.add(nextSelection.unitPath)
     }
-    setExpandedPaths(nextExpanded)
-    setIsSidebarOpen(false)
+
+    setExpandedUnits(nextExpanded)
   }
 
   const handleSemesterClick = (semesterPath: string) => {
@@ -244,7 +276,8 @@ function App() {
     if (firstUnit) {
       nextExpanded.add(firstUnit.fullPath)
     }
-    setExpandedPaths(nextExpanded)
+
+    setExpandedUnits(nextExpanded)
   }
 
   const handleUnitClick = (unitPath: string) => {
@@ -265,7 +298,7 @@ function App() {
       lessonPath: firstLesson?.fullPath ?? null,
     }))
 
-    setExpandedPaths((prev) => {
+    setExpandedUnits((prev) => {
       const next = new Set(prev)
       if (next.has(unitPath)) {
         next.delete(unitPath)
@@ -285,6 +318,7 @@ function App() {
   }
 
   const breadcrumb = getBreadcrumb(selection, tree)
+  const previewUrl = previewFile ? getPreviewUrl(previewFile) : null
 
   return (
     <div className="app-shell">
@@ -331,63 +365,86 @@ function App() {
           <section>
             <h2>과목</h2>
             <ul className="subject-list">
-              {(tree?.subjects ?? []).map((subject) => (
-                <li key={subject.fullPath}>
-                  <button
-                    type="button"
-                    className={`subject-button ${selection.subjectPath === subject.fullPath ? 'active' : ''}`}
-                    onClick={() => handleSubjectClick(subject.fullPath)}
-                  >
-                    {subject.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
+              {(tree?.subjects ?? []).map((subject) => {
+                const isActiveSubject = selection.subjectPath === subject.fullPath
+                const semesterNodes = getSemesterNodes(subject)
+                const baseNodes = semesterNodes.length ? semesterNodes : [subject]
 
-          <section>
-            <h2>단원 / 차시</h2>
-            {!activeBaseNode && <p className="placeholder">과목을 선택하면 단원 목록이 나타납니다.</p>}
-            {activeBaseNode && !activeBaseNode.childrenFolders.length && (
-              <p className="placeholder">하위 폴더가 없습니다.</p>
-            )}
-            {activeBaseNode && !!activeBaseNode.childrenFolders.length && (
-              <ul className="unit-list">
-                {activeBaseNode.childrenFolders.map((unit) => {
-                  const isExpanded = expandedPaths.has(unit.fullPath)
-                  const isUnitActive = selection.unitPath === unit.fullPath
+                return (
+                  <li key={subject.fullPath} className="subject-item">
+                    <button
+                      type="button"
+                      className={`subject-button ${isActiveSubject ? 'active' : ''}`}
+                      onClick={() => handleSubjectClick(subject.fullPath)}
+                    >
+                      <span>{subject.name}</span>
+                    </button>
 
-                  return (
-                    <li key={unit.fullPath}>
-                      <button
-                        type="button"
-                        className={`unit-button ${isUnitActive ? 'active' : ''}`}
-                        onClick={() => handleUnitClick(unit.fullPath)}
-                      >
-                        <span>{unit.name}</span>
-                        {unit.childrenFolders.length > 0 && <span>{isExpanded ? '▾' : '▸'}</span>}
-                      </button>
+                    {isActiveSubject && (
+                      <ul className="semester-list">
+                        {baseNodes.map((baseNode) => {
+                          const isSemester = baseNode.fullPath !== subject.fullPath
+                          const isActiveSemester = selection.semesterPath === baseNode.fullPath || (!selection.semesterPath && !isSemester)
+                          const unitNodes = baseNode.childrenFolders
 
-                      {isExpanded && unit.childrenFolders.length > 0 && (
-                        <ul className="lesson-list">
-                          {unit.childrenFolders.map((lesson) => (
-                            <li key={lesson.fullPath}>
-                              <button
-                                type="button"
-                                className={`lesson-button ${selection.lessonPath === lesson.fullPath ? 'active' : ''}`}
-                                onClick={() => handleLessonClick(lesson.fullPath)}
-                              >
-                                {lesson.name}
-                              </button>
+                          return (
+                            <li key={baseNode.fullPath}>
+                              {isSemester && (
+                                <button
+                                  type="button"
+                                  className={`semester-button ${isActiveSemester ? 'active' : ''}`}
+                                  onClick={() => handleSemesterClick(baseNode.fullPath)}
+                                >
+                                  {baseNode.name}
+                                </button>
+                              )}
+
+                              {!!unitNodes.length && (
+                                <ul className="unit-list">
+                                  {unitNodes.map((unit) => {
+                                    const isExpanded = expandedUnits.has(unit.fullPath)
+                                    const isUnitActive = selection.unitPath === unit.fullPath
+
+                                    return (
+                                      <li key={unit.fullPath}>
+                                        <button
+                                          type="button"
+                                          className={`unit-button ${isUnitActive ? 'active' : ''}`}
+                                          onClick={() => handleUnitClick(unit.fullPath)}
+                                        >
+                                          <span>{unit.name}</span>
+                                          {unit.childrenFolders.length > 0 && <span>{isExpanded ? '▾' : '▸'}</span>}
+                                        </button>
+
+                                        {isExpanded && unit.childrenFolders.length > 0 && (
+                                          <ul className="lesson-list">
+                                            {unit.childrenFolders.map((lesson) => (
+                                              <li key={lesson.fullPath}>
+                                                <button
+                                                  type="button"
+                                                  className={`lesson-button ${selection.lessonPath === lesson.fullPath ? 'active' : ''}`}
+                                                  onClick={() => handleLessonClick(lesson.fullPath)}
+                                                >
+                                                  {lesson.name}
+                                                </button>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        )}
+                                      </li>
+                                    )
+                                  })}
+                                </ul>
+                              )}
                             </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
+                          )
+                        })}
+                      </ul>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
           </section>
         </aside>
 
@@ -415,35 +472,93 @@ function App() {
           )}
 
           {!isLoading && !error && !!files.length && (
-            <section className="card-grid" aria-label="자료 목록">
+            <section className="file-list" aria-label="자료 목록">
               {files.map((file) => {
                 const iconKey = getFileIconKey(file.ext || file.name)
+                const rowPreviewUrl = getPreviewUrl(file)
+
                 return (
-                  <a
-                    key={file.id}
-                    href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="file-card"
-                    title={file.name}
-                  >
-                    <div className="file-card-top">
+                  <article key={file.id} className="file-row">
+                    <div className="file-info">
                       <span className="file-icon" aria-hidden="true">
                         {FILE_ICON_MAP[iconKey]}
                       </span>
-                      <span className={`file-badge ${iconKey}`}>{getFileTypeLabel(iconKey)}</span>
+                      <div>
+                        <p className="file-name">{file.name}</p>
+                        <p className="file-meta">수정일: {formatDate(file.lastUpdated)}</p>
+                      </div>
                     </div>
-                    <p className="file-name">{file.name}</p>
-                    <p className="file-date">수정일: {formatDate(file.lastUpdated)}</p>
-                  </a>
+
+                    <div className="file-actions">
+                      <span className={`file-badge ${iconKey}`}>{getFileTypeLabel(iconKey)}</span>
+                      <button
+                        type="button"
+                        className="action-button"
+                        disabled={!rowPreviewUrl}
+                        aria-label={`${file.name} 미리보기`}
+                        onClick={() => setPreviewFile(file)}
+                      >
+                        미리보기
+                      </button>
+                      <a
+                        className="action-button"
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${file.name} 새 창`}
+                      >
+                        새 창
+                      </a>
+                      <a
+                        className="action-button"
+                        href={getDownloadUrl(file)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${file.name} 다운로드`}
+                      >
+                        다운로드
+                      </a>
+                    </div>
+                  </article>
                 )
               })}
             </section>
           )}
         </main>
       </div>
+
+      {previewFile && (
+        <div className="preview-overlay" role="dialog" aria-modal="true" aria-label="파일 미리보기">
+          <div className="preview-modal">
+            <div className="preview-header">
+              <h3>{previewFile.name}</h3>
+              <button type="button" className="close-button" onClick={() => setPreviewFile(null)} aria-label="미리보기 닫기">
+                ✕
+              </button>
+            </div>
+
+            <div className="preview-body">
+              {previewUrl ? (
+                <iframe title={`${previewFile.name} 미리보기`} src={previewUrl} className="preview-frame" />
+              ) : (
+                <p>이 파일 형식은 미리보기를 지원하지 않습니다. 새 창으로 열어 주세요.</p>
+              )}
+            </div>
+
+            <div className="preview-footer">
+              <a className="action-button" href={getDownloadUrl(previewFile)} target="_blank" rel="noopener noreferrer">
+                다운로드
+              </a>
+              <a className="action-button" href={previewFile.url} target="_blank" rel="noopener noreferrer">
+                새 탭
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 export default App
+

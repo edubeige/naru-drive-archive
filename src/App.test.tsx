@@ -42,7 +42,7 @@ const data = [
   {
     name: '국어수업.pptx',
     type: 'file',
-    url: 'https://docs.google.com/presentation/d/1',
+    url: 'https://docs.google.com/presentation/d/1/edit',
     path: '2026 3학년 > 01. 국어 > 1학기 > 01. 생생하게 표현해요 > 01차시',
     lastUpdated: '2026-03-04T06:01:32.000Z',
   },
@@ -82,7 +82,7 @@ describe('App', () => {
     )
   })
 
-  it('loads subjects and renders breadcrumb + cards', async () => {
+  it('loads subjects and renders file list', async () => {
     render(<App />)
 
     await waitFor(() => {
@@ -91,7 +91,7 @@ describe('App', () => {
     })
 
     expect(screen.getByText(/현재 위치/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /국어수업.pptx/ })).toBeInTheDocument()
+    expect(screen.getByText('국어수업.pptx')).toBeInTheDocument()
   })
 
   it('switches subject and shows matching files only', async () => {
@@ -105,19 +105,26 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: '02. 수학' }))
 
     await waitFor(() => {
-      expect(screen.getByRole('link', { name: /수학활동지.pdf/ })).toBeInTheDocument()
+      expect(screen.getByText('수학활동지.pdf')).toBeInTheDocument()
     })
 
-    expect(screen.queryByRole('link', { name: /국어수업.pptx/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('국어수업.pptx')).not.toBeInTheDocument()
   })
 
-  it('renders card links with safe target attributes', async () => {
+  it('opens preview modal and exposes safe action links', async () => {
+    const user = userEvent.setup()
     render(<App />)
 
-    const fileLink = await screen.findByRole('link', { name: /국어수업.pptx/ })
+    const previewButton = await screen.findByRole('button', { name: /국어수업.pptx 미리보기/ })
+    await user.click(previewButton)
 
-    expect(fileLink).toHaveAttribute('target', '_blank')
-    expect(fileLink).toHaveAttribute('rel', expect.stringContaining('noopener'))
-    expect(fileLink).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
+    expect(screen.getByRole('dialog', { name: '파일 미리보기' })).toBeInTheDocument()
+
+    const openLink = screen.getByRole('link', { name: /국어수업.pptx 새 창/ })
+    const downloadLink = screen.getByRole('link', { name: /국어수업.pptx 다운로드/ })
+
+    expect(openLink).toHaveAttribute('target', '_blank')
+    expect(openLink).toHaveAttribute('rel', expect.stringContaining('noopener'))
+    expect(downloadLink).toHaveAttribute('target', '_blank')
   })
 })
