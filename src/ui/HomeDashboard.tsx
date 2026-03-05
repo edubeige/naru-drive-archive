@@ -565,7 +565,6 @@ export default function HomeDashboard() {
                         {!isEditing && (
                           <>
                             <p className="event-full-title">{event.title}</p>
-                            <p className={`event-color-badge ${event.color}`}>{SCHEDULE_COLOR_OPTIONS.find((x) => x.value === event.color)?.label ?? '하늘'}</p>
                           </>
                         )}
 
@@ -646,4 +645,5 @@ export default function HomeDashboard() {
     </section>
   )
 }
+
 
