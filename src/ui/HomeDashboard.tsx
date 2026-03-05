@@ -1,25 +1,7 @@
-﻿import { useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { eventsRepository, type MajorEventItem, type ScheduleEventItem } from '../lib/eventsStore'
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
-
-function formatScheduleDate(date: string): string {
-  if (!date) {
-    return '-'
-  }
-
-  const parsed = new Date(`${date}T00:00:00`)
-  if (Number.isNaN(parsed.getTime())) {
-    return date
-  }
-
-  return new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'short',
-  }).format(parsed)
-}
 
 function buildMonthGrid(viewDate: Date): Date[] {
   const year = viewDate.getFullYear()
@@ -44,8 +26,8 @@ function toDateKey(date: Date): string {
 }
 
 export default function HomeDashboard() {
-  const [majorEvents, setMajorEvents] = useState<MajorEventItem[]>(() => eventsRepository.getAll().majorEvents)
-  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEventItem[]>(() => eventsRepository.getAll().scheduleEvents)
+  const [majorEvents, setMajorEvents] = useState<MajorEventItem[]>([])
+  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEventItem[]>([])
   const [majorInput, setMajorInput] = useState('')
   const [scheduleTitleInput, setScheduleTitleInput] = useState('')
   const [scheduleDateInput, setScheduleDateInput] = useState('')
@@ -53,6 +35,7 @@ export default function HomeDashboard() {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
   })
+  const [error, setError] = useState<string | null>(null)
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, ScheduleEventItem[]>()
@@ -74,41 +57,57 @@ export default function HomeDashboard() {
     return scheduleEvents.filter((event) => event.date.startsWith(prefix))
   }, [calendarMonth, scheduleEvents])
 
-  const refreshEvents = () => {
-    const snapshot = eventsRepository.getAll()
-    setMajorEvents(snapshot.majorEvents)
-    setScheduleEvents(snapshot.scheduleEvents)
+  const refreshEvents = async () => {
+    try {
+      const snapshot = await eventsRepository.getAll()
+      setMajorEvents(snapshot.majorEvents)
+      setScheduleEvents(snapshot.scheduleEvents)
+      setError(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '일정을 불러오지 못했습니다.')
+    }
   }
 
-  const addMajorEvent = () => {
+  useEffect(() => {
+    void refreshEvents()
+  }, [])
+
+  const addMajorEvent = async () => {
     if (!majorInput.trim()) {
       return
     }
 
-    eventsRepository.addMajorEvent(majorInput)
-    setMajorInput('')
-    refreshEvents()
+    try {
+      await eventsRepository.addMajorEvent(majorInput)
+      setMajorInput('')
+      await refreshEvents()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '행사 추가에 실패했습니다.')
+    }
   }
 
-  const addScheduleEvent = () => {
+  const addScheduleEvent = async () => {
     if (!scheduleDateInput.trim() || !scheduleTitleInput.trim()) {
       return
     }
 
-    eventsRepository.addScheduleEvent(scheduleDateInput, scheduleTitleInput)
-    setScheduleDateInput('')
-    setScheduleTitleInput('')
-    refreshEvents()
+    try {
+      await eventsRepository.addScheduleEvent(scheduleDateInput, scheduleTitleInput)
+      setScheduleDateInput('')
+      setScheduleTitleInput('')
+      await refreshEvents()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '일정 추가에 실패했습니다.')
+    }
   }
 
-  const removeMajorEvent = (id: string) => {
-    eventsRepository.removeMajorEvent(id)
-    refreshEvents()
-  }
-
-  const removeScheduleEvent = (id: string) => {
-    eventsRepository.removeScheduleEvent(id)
-    refreshEvents()
+  const removeMajorEvent = async (id: string) => {
+    try {
+      await eventsRepository.removeMajorEvent(id)
+      await refreshEvents()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '행사 삭제에 실패했습니다.')
+    }
   }
 
   const moveMonth = (offset: number) => {
@@ -128,6 +127,8 @@ export default function HomeDashboard() {
         <p>학년 주요행사와 캘린더 일정을 한곳에서 관리합니다.</p>
       </header>
 
+      {error && <div className="state-box error">{error}</div>}
+
       <article className="home-card">
         <div className="home-card-head">
           <h3>학년 주요행사</h3>
@@ -139,7 +140,7 @@ export default function HomeDashboard() {
             placeholder="행사명 입력 (예: 학부모 상담주간)"
             aria-label="학년 주요행사 입력"
           />
-          <button type="button" className="action-button primary" onClick={addMajorEvent}>
+          <button type="button" className="action-button primary" onClick={() => void addMajorEvent()}>
             추가
           </button>
         </div>
@@ -150,7 +151,7 @@ export default function HomeDashboard() {
             {majorEvents.map((event) => (
               <li key={event.id}>
                 <span>{event.title}</span>
-                <button type="button" onClick={() => removeMajorEvent(event.id)} aria-label={`${event.title} 삭제`}>
+                <button type="button" onClick={() => void removeMajorEvent(event.id)} aria-label={`${event.title} 삭제`}>
                   삭제
                 </button>
               </li>
@@ -178,7 +179,7 @@ export default function HomeDashboard() {
             placeholder="행사명"
             aria-label="일정 행사명"
           />
-          <button type="button" className="action-button primary" onClick={addScheduleEvent}>
+          <button type="button" className="action-button primary" onClick={() => void addScheduleEvent()}>
             일정 추가
           </button>
         </div>
@@ -206,10 +207,10 @@ export default function HomeDashboard() {
               <div key={key} className={`day-cell ${isCurrentMonth ? '' : 'dimmed'} ${isToday ? 'today' : ''}`}>
                 <div className="day-top">{date.getDate()}</div>
                 <div className="day-events">
-                  {events.slice(0, 2).map((event) => (
+                  {events.slice(0, 3).map((event) => (
                     <p key={event.id} title={event.title}>{event.title}</p>
                   ))}
-                  {events.length > 2 && <p>+{events.length - 2}개</p>}
+                  {events.length > 3 && <p>+{events.length - 3}개</p>}
                 </div>
               </div>
             )
@@ -224,38 +225,11 @@ export default function HomeDashboard() {
         )}
       </article>
 
-      <article className="home-card">
-        <div className="home-card-head">
-          <h3>전체 일정</h3>
-          <span>{scheduleEvents.length}건</span>
-        </div>
-
-        {!scheduleEvents.length && <p className="empty-text">등록된 일정이 없습니다.</p>}
-        {!!scheduleEvents.length && (
-          <ul className="schedule-list">
-            {scheduleEvents.map((event) => (
-              <li key={event.id}>
-                <div>
-                  <strong>{event.title}</strong>
-                  <p>{formatScheduleDate(event.date)}</p>
-                </div>
-                <button type="button" onClick={() => removeScheduleEvent(event.id)} aria-label={`${event.title} 삭제`}>
-                  삭제
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </article>
-
       <article className="backend-note">
-        <h4>서버 저장 백엔드 제안</h4>
+        <h4>서버 저장 안내</h4>
         <p>
-          현재는 `localStorage` 임시 구현입니다. 다음 단계로는
-          `Google Apps Script + Google Sheets` 구성이 가장 빠르고, 교사 계정 환경에 잘 맞습니다.
-        </p>
-        <p>
-          대안으로 `Supabase`도 가능하지만 인증/권한 설계가 추가됩니다. 원하시면 다음 턴에 앱스 스크립트 API 스펙부터 바로 만들어드리겠습니다.
+          현재 일정은 `VITE_EVENTS_API_URL`로 지정한 Apps Script API에 저장됩니다.
+          6명이 함께 사용 가능한 공유 저장 구조입니다.
         </p>
       </article>
     </section>

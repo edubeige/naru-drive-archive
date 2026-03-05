@@ -17,123 +17,103 @@ export interface EventsSnapshot {
 }
 
 export interface EventsRepository {
-  getAll(): EventsSnapshot
-  addMajorEvent(title: string): MajorEventItem
-  removeMajorEvent(id: string): void
-  addScheduleEvent(date: string, title: string): ScheduleEventItem
-  removeScheduleEvent(id: string): void
+  getAll(): Promise<EventsSnapshot>
+  addMajorEvent(title: string): Promise<MajorEventItem>
+  removeMajorEvent(id: string): Promise<void>
+  addScheduleEvent(date: string, title: string): Promise<ScheduleEventItem>
+  removeScheduleEvent(id: string): Promise<void>
 }
 
-const STORAGE_KEY = 'naru_drive_archive_events_v1'
+const EVENTS_API_URL = import.meta.env.VITE_EVENTS_API_URL as string | undefined
 
-interface PersistedData {
-  majorEvents: MajorEventItem[]
-  scheduleEvents: ScheduleEventItem[]
+interface ApiPayload {
+  action:
+    | 'getAll'
+    | 'addMajorEvent'
+    | 'removeMajorEvent'
+    | 'addScheduleEvent'
+    | 'removeScheduleEvent'
+  title?: string
+  date?: string
+  id?: string
 }
 
-function generateId(prefix: string): string {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+interface ApiResponse {
+  success: boolean
+  data?: EventsSnapshot | MajorEventItem | ScheduleEventItem
+  message?: string
 }
 
-function getEmptyData(): PersistedData {
-  return {
-    majorEvents: [],
-    scheduleEvents: [],
+function ensureApiUrl(): string {
+  if (!EVENTS_API_URL) {
+    throw new Error('VITE_EVENTS_API_URL is not configured')
   }
+  return EVENTS_API_URL
 }
 
-function safeParse(raw: string | null): PersistedData {
-  if (!raw) {
-    return getEmptyData()
+async function callApi(payload: ApiPayload): Promise<ApiResponse> {
+  const url = ensureApiUrl()
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Events API HTTP ${response.status}`)
   }
 
-  try {
-    const parsed = JSON.parse(raw) as PersistedData
+  const json = (await response.json()) as ApiResponse
+  if (!json.success) {
+    throw new Error(json.message || 'Events API failed')
+  }
+
+  return json
+}
+
+class AppsScriptEventsRepository implements EventsRepository {
+  async getAll(): Promise<EventsSnapshot> {
+    const res = await callApi({ action: 'getAll' })
+    const data = res.data as EventsSnapshot | undefined
+
     return {
-      majorEvents: Array.isArray(parsed.majorEvents) ? parsed.majorEvents : [],
-      scheduleEvents: Array.isArray(parsed.scheduleEvents) ? parsed.scheduleEvents : [],
-    }
-  } catch {
-    return getEmptyData()
-  }
-}
-
-export class LocalStorageEventsRepository implements EventsRepository {
-  private read(): PersistedData {
-    if (typeof localStorage === 'undefined') {
-      return getEmptyData()
-    }
-
-    return safeParse(localStorage.getItem(STORAGE_KEY))
-  }
-
-  private write(data: PersistedData): void {
-    if (typeof localStorage === 'undefined') {
-      return
-    }
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-  }
-
-  getAll(): EventsSnapshot {
-    const data = this.read()
-
-    return {
-      majorEvents: [...data.majorEvents].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-      scheduleEvents: [...data.scheduleEvents].sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title, 'ko-KR')),
+      majorEvents: Array.isArray(data?.majorEvents) ? data?.majorEvents : [],
+      scheduleEvents: Array.isArray(data?.scheduleEvents) ? data?.scheduleEvents : [],
     }
   }
 
-  addMajorEvent(title: string): MajorEventItem {
+  async addMajorEvent(title: string): Promise<MajorEventItem> {
     const trimmed = title.trim()
     if (!trimmed) {
       throw new Error('Major event title is required')
     }
 
-    const data = this.read()
-    const created: MajorEventItem = {
-      id: generateId('major'),
-      title: trimmed,
-      createdAt: new Date().toISOString(),
-    }
-
-    data.majorEvents.push(created)
-    this.write(data)
-    return created
+    const res = await callApi({ action: 'addMajorEvent', title: trimmed })
+    return res.data as MajorEventItem
   }
 
-  removeMajorEvent(id: string): void {
-    const data = this.read()
-    data.majorEvents = data.majorEvents.filter((item) => item.id !== id)
-    this.write(data)
+  async removeMajorEvent(id: string): Promise<void> {
+    await callApi({ action: 'removeMajorEvent', id })
   }
 
-  addScheduleEvent(date: string, title: string): ScheduleEventItem {
-    const trimmedTitle = title.trim()
+  async addScheduleEvent(date: string, title: string): Promise<ScheduleEventItem> {
     const trimmedDate = date.trim()
+    const trimmedTitle = title.trim()
 
     if (!trimmedDate || !trimmedTitle) {
       throw new Error('Schedule event date and title are required')
     }
 
-    const data = this.read()
-    const created: ScheduleEventItem = {
-      id: generateId('schedule'),
-      title: trimmedTitle,
-      date: trimmedDate,
-      createdAt: new Date().toISOString(),
-    }
-
-    data.scheduleEvents.push(created)
-    this.write(data)
-    return created
+    const res = await callApi({ action: 'addScheduleEvent', date: trimmedDate, title: trimmedTitle })
+    return res.data as ScheduleEventItem
   }
 
-  removeScheduleEvent(id: string): void {
-    const data = this.read()
-    data.scheduleEvents = data.scheduleEvents.filter((item) => item.id !== id)
-    this.write(data)
+  async removeScheduleEvent(id: string): Promise<void> {
+    await callApi({ action: 'removeScheduleEvent', id })
   }
 }
 
-export const eventsRepository: EventsRepository = new LocalStorageEventsRepository()
+export const eventsRepository: EventsRepository = new AppsScriptEventsRepository()
