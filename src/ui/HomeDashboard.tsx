@@ -48,10 +48,9 @@ export default function HomeDashboard() {
   const [scheduleDateInput, setScheduleDateInput] = useState('')
 
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null)
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [popupAddTitle, setPopupAddTitle] = useState('')
-  const [editTitle, setEditTitle] = useState('')
-  const [isEditingEvent, setIsEditingEvent] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
 
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date()
@@ -85,13 +84,6 @@ export default function HomeDashboard() {
     }
     return sortScheduleEvents(eventsByDate.get(selectedDateKey) ?? [])
   }, [eventsByDate, selectedDateKey])
-
-  const selectedEvent = useMemo(() => {
-    if (!selectedEventId) {
-      return null
-    }
-    return scheduleEvents.find((event) => event.id === selectedEventId) ?? null
-  }, [scheduleEvents, selectedEventId])
 
   const refreshEvents = async () => {
     try {
@@ -163,21 +155,29 @@ export default function HomeDashboard() {
     }
   }
 
-  const handleTopAddSchedule = async () => {
-    const date = scheduleDateInput.trim()
-    const title = scheduleTitleInput.trim()
-    await addScheduleEvent(date, title)
-    setScheduleDateInput('')
-    setScheduleTitleInput('')
-  }
-
-  const handlePopupAddSchedule = async () => {
-    if (!selectedDateKey) {
+  const updateScheduleEvent = async (event: ScheduleEventItem, title: string) => {
+    const nextTitle = title.trim()
+    if (!nextTitle) {
       return
     }
-    const title = popupAddTitle.trim()
-    await addScheduleEvent(selectedDateKey, title)
-    setPopupAddTitle('')
+
+    const previous = scheduleEvents
+    const optimistic = { ...event, title: nextTitle }
+    setScheduleEvents((prev) => sortScheduleEvents(prev.map((item) => (item.id === event.id ? optimistic : item))))
+    setBusy(true)
+
+    try {
+      const updated = await eventsRepository.updateScheduleEvent(event.id, event.date, nextTitle)
+      setScheduleEvents((prev) => sortScheduleEvents(prev.map((item) => (item.id === event.id ? updated : item))))
+      setEditingEventId(null)
+      setEditingTitle('')
+      setError(null)
+    } catch (e) {
+      setScheduleEvents(previous)
+      setError(e instanceof Error ? e.message : '일정 수정에 실패했습니다.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const removeMajorEvent = async (id: string) => {
@@ -203,7 +203,7 @@ export default function HomeDashboard() {
 
     try {
       await eventsRepository.removeScheduleEvent(id)
-      setSelectedEventId((prev) => (prev === id ? null : prev))
+      setEditingEventId((prev) => (prev === id ? null : prev))
       setError(null)
     } catch (e) {
       setScheduleEvents(previous)
@@ -213,45 +213,21 @@ export default function HomeDashboard() {
     }
   }
 
-  const startEditEvent = (event: ScheduleEventItem) => {
-    setSelectedEventId(event.id)
-    setSelectedDateKey(event.date)
-    setEditTitle(event.title)
-    setIsEditingEvent(true)
+  const handleTopAddSchedule = async () => {
+    const date = scheduleDateInput.trim()
+    const title = scheduleTitleInput.trim()
+    await addScheduleEvent(date, title)
+    setScheduleDateInput('')
+    setScheduleTitleInput('')
   }
 
-  const cancelEditEvent = () => {
-    setIsEditingEvent(false)
-    setEditTitle('')
-  }
-
-  const saveEditEvent = async () => {
-    if (!selectedEvent) {
+  const handlePopupAddSchedule = async () => {
+    if (!selectedDateKey) {
       return
     }
-
-    const nextTitle = editTitle.trim()
-    if (!nextTitle) {
-      return
-    }
-
-    const previous = scheduleEvents
-    const optimistic = { ...selectedEvent, title: nextTitle }
-
-    setScheduleEvents((prev) => sortScheduleEvents(prev.map((item) => (item.id === selectedEvent.id ? optimistic : item))))
-    setBusy(true)
-
-    try {
-      const updated = await eventsRepository.updateScheduleEvent(selectedEvent.id, selectedEvent.date, nextTitle)
-      setScheduleEvents((prev) => sortScheduleEvents(prev.map((item) => (item.id === selectedEvent.id ? updated : item))))
-      setIsEditingEvent(false)
-      setError(null)
-    } catch (e) {
-      setScheduleEvents(previous)
-      setError(e instanceof Error ? e.message : '일정 수정에 실패했습니다.')
-    } finally {
-      setBusy(false)
-    }
+    const title = popupAddTitle.trim()
+    await addScheduleEvent(selectedDateKey, title)
+    setPopupAddTitle('')
   }
 
   const moveMonth = (offset: number) => {
@@ -265,18 +241,17 @@ export default function HomeDashboard() {
 
   const openDatePopup = (dateKey: string) => {
     setSelectedDateKey(dateKey)
-    setSelectedEventId(null)
+    setScheduleDateInput(dateKey)
     setPopupAddTitle('')
-    setIsEditingEvent(false)
-    setEditTitle('')
+    setEditingEventId(null)
+    setEditingTitle('')
   }
 
-  const closePopups = () => {
+  const closeDatePopup = () => {
     setSelectedDateKey(null)
-    setSelectedEventId(null)
     setPopupAddTitle('')
-    setIsEditingEvent(false)
-    setEditTitle('')
+    setEditingEventId(null)
+    setEditingTitle('')
   }
 
   return (
@@ -326,6 +301,17 @@ export default function HomeDashboard() {
           <button type="button" className="action-button" onClick={goCurrentMonth}>오늘</button>
         </div>
 
+        <div className="home-metrics">
+          <div className="home-metric-card">
+            <span>이번 달 일정</span>
+            <strong>{monthlySchedules.length}건</strong>
+          </div>
+          <div className="home-metric-card">
+            <span>오늘 일정</span>
+            <strong>{(eventsByDate.get(toDateKey(new Date())) ?? []).length}건</strong>
+          </div>
+        </div>
+
         <div className="inline-form two-col">
           <input
             type="date"
@@ -362,12 +348,13 @@ export default function HomeDashboard() {
             const events = eventsByDate.get(key) ?? []
             const isCurrentMonth = date.getMonth() === calendarMonth.getMonth()
             const isToday = key === toDateKey(new Date())
+            const isSelected = key === selectedDateKey
 
             return (
               <button
                 key={key}
                 type="button"
-                className={`day-cell ${isCurrentMonth ? '' : 'dimmed'} ${isToday ? 'today' : ''}`}
+                className={`day-cell ${isCurrentMonth ? '' : 'dimmed'} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
                 onClick={() => openDatePopup(key)}
                 aria-label={`${key} 일정 보기`}
               >
@@ -382,13 +369,6 @@ export default function HomeDashboard() {
             )
           })}
         </div>
-
-        {!!monthlySchedules.length && (
-          <div className="monthly-inline">
-            <strong>{calendarMonth.getMonth() + 1}월 일정</strong>
-            <span>{monthlySchedules.length}건</span>
-          </div>
-        )}
       </article>
 
       <article className="backend-note">
@@ -397,38 +377,17 @@ export default function HomeDashboard() {
       </article>
 
       {selectedDateKey && (
-        <div className="calendar-overlay" onClick={closePopups}>
+        <div className="calendar-overlay" onClick={closeDatePopup}>
           <section className="calendar-modal" role="dialog" aria-label="날짜 일정" onClick={(event) => event.stopPropagation()}>
             <header className="calendar-modal-head">
               <div>
                 <h3>{formatDateLabel(selectedDateKey)} 일정</h3>
-                <p>{selectedDateKey}</p>
+                <p>{selectedDateKey} · {selectedDateEvents.length}건</p>
               </div>
-              <button type="button" className="close-button" onClick={closePopups} aria-label="닫기">✕</button>
+              <button type="button" className="close-button" onClick={closeDatePopup} aria-label="닫기">✕</button>
             </header>
 
             <div className="calendar-modal-body">
-              {!selectedDateEvents.length && <p className="empty-text">등록된 일정이 없습니다.</p>}
-              {!!selectedDateEvents.length && (
-                <ul className="popup-event-list">
-                  {selectedDateEvents.map((event) => (
-                    <li key={event.id}>
-                      <button
-                        type="button"
-                        className="popup-event-item"
-                        onClick={() => {
-                          setSelectedEventId(event.id)
-                          setIsEditingEvent(false)
-                          setEditTitle('')
-                        }}
-                      >
-                        {event.title}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
               <div className="popup-add-form">
                 <input
                   value={popupAddTitle}
@@ -440,63 +399,81 @@ export default function HomeDashboard() {
                   추가
                 </button>
               </div>
-            </div>
-          </section>
-        </div>
-      )}
 
-      {selectedEvent && (
-        <div className="calendar-overlay" onClick={() => { setSelectedEventId(null); setIsEditingEvent(false) }}>
-          <section className="calendar-modal detail" role="dialog" aria-label="일정 상세" onClick={(event) => event.stopPropagation()}>
-            <header className="calendar-modal-head">
-              <div>
-                <h3>일정 상세</h3>
-                <p>{formatDateLabel(selectedEvent.date)}</p>
-              </div>
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => { setSelectedEventId(null); setIsEditingEvent(false) }}
-                aria-label="닫기"
-              >
-                ✕
-              </button>
-            </header>
+              {!selectedDateEvents.length && <p className="empty-text popup-empty">등록된 일정이 없습니다.</p>}
 
-            <div className="calendar-modal-body">
-              {!isEditingEvent && <p className="event-full-title">{selectedEvent.title}</p>}
+              {!!selectedDateEvents.length && (
+                <ul className="popup-event-list">
+                  {selectedDateEvents.map((event) => {
+                    const isEditing = editingEventId === event.id
 
-              {isEditingEvent && (
-                <div className="popup-add-form single">
-                  <input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} aria-label="일정 제목 수정" />
-                </div>
+                    return (
+                      <li key={event.id} className="popup-event-row">
+                        {!isEditing && <p className="event-full-title">{event.title}</p>}
+
+                        {isEditing && (
+                          <div className="popup-add-form single">
+                            <input
+                              value={editingTitle}
+                              onChange={(inputEvent) => setEditingTitle(inputEvent.target.value)}
+                              aria-label="일정 제목 수정"
+                            />
+                          </div>
+                        )}
+
+                        <div className="popup-actions">
+                          {!isEditing && (
+                            <button
+                              type="button"
+                              className="action-button"
+                              onClick={() => {
+                                setEditingEventId(event.id)
+                                setEditingTitle(event.title)
+                              }}
+                              disabled={busy}
+                            >
+                              수정
+                            </button>
+                          )}
+
+                          {isEditing && (
+                            <>
+                              <button
+                                type="button"
+                                className="action-button primary"
+                                onClick={() => void updateScheduleEvent(event, editingTitle)}
+                                disabled={busy}
+                              >
+                                저장
+                              </button>
+                              <button
+                                type="button"
+                                className="action-button"
+                                onClick={() => {
+                                  setEditingEventId(null)
+                                  setEditingTitle('')
+                                }}
+                                disabled={busy}
+                              >
+                                취소
+                              </button>
+                            </>
+                          )}
+
+                          <button
+                            type="button"
+                            className="action-button danger"
+                            onClick={() => void removeScheduleEvent(event.id)}
+                            disabled={busy}
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
               )}
-
-              <div className="popup-actions">
-                {!isEditingEvent && (
-                  <button type="button" className="action-button" onClick={() => startEditEvent(selectedEvent)} disabled={busy}>
-                    수정
-                  </button>
-                )}
-                {isEditingEvent && (
-                  <>
-                    <button type="button" className="action-button primary" onClick={() => void saveEditEvent()} disabled={busy}>
-                      저장
-                    </button>
-                    <button type="button" className="action-button" onClick={cancelEditEvent} disabled={busy}>
-                      취소
-                    </button>
-                  </>
-                )}
-                <button
-                  type="button"
-                  className="action-button danger"
-                  onClick={() => void removeScheduleEvent(selectedEvent.id)}
-                  disabled={busy}
-                >
-                  삭제
-                </button>
-              </div>
             </div>
           </section>
         </div>

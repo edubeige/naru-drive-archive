@@ -1033,3 +1033,61 @@ input:focus, button:focus-visible, a:focus-visible {
   outline-offset: 1px;
 }
 
+
+.home-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0 0 0.65rem;
+}
+
+.home-metric-card {
+  border: 1px solid #d6e3fb;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #ffffff, #f7faff);
+  padding: 0.54rem 0.68rem;
+  display: grid;
+  gap: 0.16rem;
+}
+
+.home-metric-card span {
+  font-size: 0.78rem;
+  color: #657ca4;
+  font-weight: 600;
+}
+
+.home-metric-card strong {
+  font-size: 1rem;
+  color: #203f76;
+}
+
+.day-cell.selected {
+  background: #eaf2ff;
+  box-shadow: inset 0 0 0 1px #9fc0ff;
+}
+
+.popup-empty {
+  margin-top: 0.7rem;
+}
+
+.popup-event-row {
+  border: 1px solid #d7e4fb;
+  border-radius: var(--radius-sm);
+  background: #f8fbff;
+  padding: 0.58rem;
+}
+
+.popup-event-row .event-full-title {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 760px) {
+  .home-metrics {
+    grid-template-columns: 1fr;
+  }
+}
