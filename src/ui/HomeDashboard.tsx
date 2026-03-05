@@ -383,7 +383,7 @@ export default function HomeDashboard() {
       <article className="home-card">
         <div className="home-card-head">
           <h3>일정 캘린더</h3>
-          <button type="button" className="action-button" onClick={goCurrentMonth}>오늘</button>
+          <button type="button" className="action-button calendar-today-btn" onClick={goCurrentMonth}>오늘</button>
         </div>
         <div className="inline-form two-col">
           <input
@@ -404,11 +404,11 @@ export default function HomeDashboard() {
         </div>
 
         <div className="calendar-nav">
-          <button type="button" onClick={() => moveMonth(-1)} aria-label="이전 달">◀</button>
+          <button type="button" className="calendar-nav-btn" onClick={() => moveMonth(-1)} aria-label="이전 달">◀</button>
           <strong>
             {calendarMonth.getFullYear()}년 {calendarMonth.getMonth() + 1}월
           </strong>
-          <button type="button" onClick={() => moveMonth(1)} aria-label="다음 달">▶</button>
+          <button type="button" className="calendar-nav-btn" onClick={() => moveMonth(1)} aria-label="다음 달">▶</button>
         </div>
 
         <div className="calendar-grid">
@@ -554,4 +554,5 @@ export default function HomeDashboard() {
     </section>
   )
 }
+
 
