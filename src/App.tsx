@@ -11,6 +11,7 @@ import {
   type FolderNode,
 } from './lib/driveTree'
 import HomeDashboard from './ui/HomeDashboard'
+import ReservationDashboard from './ui/ReservationDashboard'
 
 interface SelectionState {
   subjectPath: string | null
@@ -19,7 +20,7 @@ interface SelectionState {
   lessonPath: string | null
 }
 
-type AppTab = 'home' | 'materials'
+type AppTab = 'home' | 'materials' | 'reservation'
 
 const FALLBACK_API_URL =
   'https://script.google.com/macros/s/AKfycbzONOmQfiiuOEn7_jeOChPkzS-_qAsuFfMDreUs3o43OLOF6e8GezyDny8yqtL_TUBR6Q/exec'
@@ -434,6 +435,18 @@ function App() {
             >
               과목 자료
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'reservation'}
+              className={`sidebar-tab ${activeTab === 'reservation' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('reservation')
+                setIsSidebarOpen(false)
+              }}
+            >
+              예약
+            </button>
           </div>
 
           {activeTab === 'materials' && (
@@ -557,8 +570,16 @@ function App() {
           {activeTab === 'home' && (
             <section className="home-sidebar-note">
               <h2>홈 안내</h2>
-              <p>학년 주요행사와 일정을 추가하면 이 기기에서 즉시 저장됩니다.</p>
-              <p>백엔드 연결 시 전체 교사가 같은 일정을 공유할 수 있습니다.</p>
+              <p>학년 주요행사와 캘린더 일정을 교사 전체가 공유 관리합니다.</p>
+              <p>추가/수정/삭제 내용은 서버에 즉시 저장됩니다.</p>
+            </section>
+          )}
+
+          {activeTab === 'reservation' && (
+            <section className="home-sidebar-note">
+              <h2>예약 안내</h2>
+              <p>학급(3-1~3-5)과 물품, 날짜, 교시(1~6)로 예약을 등록합니다.</p>
+              <p>반납 완료 버튼으로 미반납 목록을 바로 정리할 수 있습니다.</p>
             </section>
           )}
         </aside>
@@ -634,6 +655,7 @@ function App() {
           )}
 
           {activeTab === 'home' && <HomeDashboard />}
+          {activeTab === 'reservation' && <ReservationDashboard />}
         </main>
       </div>
 

@@ -627,7 +627,7 @@ input {
 
 .sidebar-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.4rem;
   margin-bottom: 0.8rem;
 }
@@ -1326,3 +1326,132 @@ input:focus, button:focus-visible, a:focus-visible {
     font-size: 1.36rem;
   }
 }
+
+/* Reservation */
+.reservation-dashboard {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.reservation-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.reservation-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.reservation-form-grid label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.86rem;
+  color: #4c6390;
+  font-weight: 700;
+}
+
+.reservation-form-grid input,
+.reservation-form-grid select {
+  border: 1px solid #c3d4f5;
+  border-radius: var(--radius-sm);
+  padding: 0.56rem 0.68rem;
+  background: #fff;
+  color: #1f3665;
+}
+
+.reservation-form-grid .span-full {
+  grid-column: 1 / -1;
+}
+
+.top-item-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.chip-button {
+  border: 1px solid #c5d7ff;
+  cursor: pointer;
+}
+
+.chip-button.active {
+  background: linear-gradient(145deg, #2d66d7, #1e4caf);
+  color: #fff;
+  border-color: transparent;
+}
+
+.loan-filter-tabs {
+  display: inline-flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.reservation-submit-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.loan-open-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.52rem;
+}
+
+.loan-open-list li {
+  border: 1px solid #d8e4fb;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #fbfdff, #f5f9ff);
+  padding: 0.7rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.loan-title {
+  margin: 0;
+  color: #19345f;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.loan-meta {
+  margin: 0.18rem 0 0;
+  color: #6078a4;
+  font-size: 0.86rem;
+}
+
+@media (max-width: 1024px) {
+  .sidebar-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .reservation-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .reservation-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reservation-submit-row {
+    justify-content: stretch;
+  }
+
+  .reservation-submit-row .action-button {
+    width: 100%;
+  }
+
+  .loan-open-list li {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
