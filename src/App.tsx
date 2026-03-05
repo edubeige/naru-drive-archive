@@ -159,7 +159,7 @@ function folderMatches(node: FolderNode, query: string): boolean {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState<AppTab>('materials')
+  const [activeTab, setActiveTab] = useState<AppTab>('home')
   const [tree, setTree] = useState<DriveTree | null>(null)
   const [selection, setSelection] = useState<SelectionState>({
     subjectPath: null,
@@ -170,7 +170,8 @@ function App() {
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set())
   const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set())
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [hasFetchedMaterials, setHasFetchedMaterials] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null)
   const [navQuery, setNavQuery] = useState('')
@@ -258,8 +259,13 @@ function App() {
   }
 
   useEffect(() => {
+    if (activeTab !== 'materials' || hasFetchedMaterials) {
+      return
+    }
+
+    setHasFetchedMaterials(true)
     void fetchData()
-  }, [])
+  }, [activeTab, hasFetchedMaterials])
 
   const handleSubjectClick = (subjectPath: string) => {
     if (!tree) {
@@ -661,3 +667,4 @@ function App() {
 }
 
 export default App
+

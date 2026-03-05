@@ -69,6 +69,11 @@ const data = [
   },
 ] as const
 
+async function openMaterialsTab() {
+  const tab = await screen.findByRole('tab', { name: '과목 자료' })
+  await userEvent.setup().click(tab)
+}
+
 describe('App', () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -84,6 +89,7 @@ describe('App', () => {
 
   it('loads subjects and renders file list', async () => {
     render(<App />)
+    await openMaterialsTab()
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '01. 국어' })).toBeInTheDocument()
@@ -97,6 +103,7 @@ describe('App', () => {
   it('switches subject and shows matching files only', async () => {
     const user = userEvent.setup()
     render(<App />)
+    await openMaterialsTab()
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '02. 수학' })).toBeInTheDocument()
@@ -114,6 +121,7 @@ describe('App', () => {
   it('opens preview modal and exposes safe action links', async () => {
     const user = userEvent.setup()
     render(<App />)
+    await openMaterialsTab()
 
     const previewButton = await screen.findByRole('button', { name: /국어수업.pptx 미리보기/ })
     await user.click(previewButton)

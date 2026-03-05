@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { eventsRepository, type MajorEventItem, type ScheduleEventItem } from '../lib/eventsStore'
 
-const WEEKDAY_LABELS = ['ÀÏ', '¿ù', 'È­', '¼ö', '¸ñ', '±İ', 'Åä']
+const WEEKDAY_LABELS = ['ì¼', 'ì›”', 'í™”', 'ìˆ˜', 'ëª©', 'ê¸ˆ', 'í† ']
 
 function buildMonthGrid(viewDate: Date): Date[] {
   const year = viewDate.getFullYear()
@@ -72,7 +72,7 @@ export default function HomeDashboard() {
       setScheduleEvents(sortScheduleEvents(snapshot.scheduleEvents))
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'ÀÏÁ¤À» ºÒ·¯¿ÀÁö ¸øÇß½À´Ï´Ù.')
+      setError(e instanceof Error ? e.message : 'ì¼ì •ì„ ë¶ˆëŸ¬ì˜¤ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.')
     }
   }
 
@@ -103,7 +103,7 @@ export default function HomeDashboard() {
       setError(null)
     } catch (e) {
       setMajorEvents((prev) => prev.filter((event) => event.id !== tempId))
-      setError(e instanceof Error ? e.message : 'Çà»ç Ãß°¡¿¡ ½ÇÆĞÇß½À´Ï´Ù.')
+      setError(e instanceof Error ? e.message : 'í–‰ì‚¬ ì¶”ê°€ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.')
     } finally {
       setBusy(false)
     }
@@ -136,7 +136,7 @@ export default function HomeDashboard() {
       setError(null)
     } catch (e) {
       setScheduleEvents((prev) => prev.filter((event) => event.id !== tempId))
-      setError(e instanceof Error ? e.message : 'ÀÏÁ¤ Ãß°¡¿¡ ½ÇÆĞÇß½À´Ï´Ù.')
+      setError(e instanceof Error ? e.message : 'ì¼ì • ì¶”ê°€ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.')
     } finally {
       setBusy(false)
     }
@@ -152,7 +152,7 @@ export default function HomeDashboard() {
       setError(null)
     } catch (e) {
       setMajorEvents(previous)
-      setError(e instanceof Error ? e.message : 'Çà»ç »èÁ¦¿¡ ½ÇÆĞÇß½À´Ï´Ù.')
+      setError(e instanceof Error ? e.message : 'í–‰ì‚¬ ì‚­ì œì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.')
     } finally {
       setBusy(false)
     }
@@ -168,39 +168,39 @@ export default function HomeDashboard() {
   }
 
   return (
-    <section className="home-dashboard" aria-label="È¨ ´ë½Ãº¸µå">
+    <section className="home-dashboard" aria-label="í™ˆ ëŒ€ì‹œë³´ë“œ">
       <header className="home-header">
-        <p className="home-kicker">È¨</p>
-        <h2>ÇĞ³â ¸ŞÀÎ ÆäÀÌÁö</h2>
-        <p>ÇĞ³â ÁÖ¿äÇà»ç¿Í Ä¶¸°´õ ÀÏÁ¤À» ÇÑ°÷¿¡¼­ °ü¸®ÇÕ´Ï´Ù.</p>
+        <p className="home-kicker">í™ˆ</p>
+        <h2>í•™ë…„ ë©”ì¸ í˜ì´ì§€</h2>
+        <p>í•™ë…„ ì£¼ìš”í–‰ì‚¬ì™€ ìº˜ë¦°ë” ì¼ì •ì„ í•œê³³ì—ì„œ ê´€ë¦¬í•©ë‹ˆë‹¤.</p>
       </header>
 
       {error && <div className="state-box error">{error}</div>}
 
       <article className="home-card">
         <div className="home-card-head">
-          <h3>ÇĞ³â ÁÖ¿äÇà»ç</h3>
+          <h3>í•™ë…„ ì£¼ìš”í–‰ì‚¬</h3>
         </div>
         <div className="inline-form">
           <input
             value={majorInput}
             onChange={(event) => setMajorInput(event.target.value)}
-            placeholder="Çà»ç¸í ÀÔ·Â (¿¹: ÇĞºÎ¸ğ »ó´ãÁÖ°£)"
-            aria-label="ÇĞ³â ÁÖ¿äÇà»ç ÀÔ·Â"
+            placeholder="í–‰ì‚¬ëª… ì…ë ¥ (ì˜ˆ: í•™ë¶€ëª¨ ìƒë‹´ì£¼ê°„)"
+            aria-label="í•™ë…„ ì£¼ìš”í–‰ì‚¬ ì…ë ¥"
           />
           <button type="button" className="action-button primary" onClick={() => void addMajorEvent()} disabled={busy}>
-            Ãß°¡
+            ì¶”ê°€
           </button>
         </div>
 
-        {!majorEvents.length && <p className="empty-text">µî·ÏµÈ ÁÖ¿äÇà»ç°¡ ¾ø½À´Ï´Ù.</p>}
+        {!majorEvents.length && <p className="empty-text">ë“±ë¡ëœ ì£¼ìš”í–‰ì‚¬ê°€ ì—†ìŠµë‹ˆë‹¤.</p>}
         {!!majorEvents.length && (
           <ul className="major-events-list">
             {majorEvents.map((event) => (
               <li key={event.id}>
                 <span>{event.title}</span>
-                <button type="button" onClick={() => void removeMajorEvent(event.id)} aria-label={`${event.title} »èÁ¦`} disabled={busy}>
-                  »èÁ¦
+                <button type="button" onClick={() => void removeMajorEvent(event.id)} aria-label={`${event.title} ì‚­ì œ`} disabled={busy}>
+                  ì‚­ì œ
                 </button>
               </li>
             ))}
@@ -210,8 +210,8 @@ export default function HomeDashboard() {
 
       <article className="home-card">
         <div className="home-card-head">
-          <h3>ÀÏÁ¤ Ä¶¸°´õ</h3>
-          <button type="button" className="action-button" onClick={goCurrentMonth}>¿À´Ã</button>
+          <h3>ì¼ì • ìº˜ë¦°ë”</h3>
+          <button type="button" className="action-button" onClick={goCurrentMonth}>ì˜¤ëŠ˜</button>
         </div>
 
         <div className="inline-form two-col">
@@ -219,25 +219,25 @@ export default function HomeDashboard() {
             type="date"
             value={scheduleDateInput}
             onChange={(event) => setScheduleDateInput(event.target.value)}
-            aria-label="ÀÏÁ¤ ³¯Â¥"
+            aria-label="ì¼ì • ë‚ ì§œ"
           />
           <input
             value={scheduleTitleInput}
             onChange={(event) => setScheduleTitleInput(event.target.value)}
-            placeholder="Çà»ç¸í"
-            aria-label="ÀÏÁ¤ Çà»ç¸í"
+            placeholder="í–‰ì‚¬ëª…"
+            aria-label="ì¼ì • í–‰ì‚¬ëª…"
           />
           <button type="button" className="action-button primary" onClick={() => void addScheduleEvent()} disabled={busy}>
-            ÀÏÁ¤ Ãß°¡
+            ì¼ì • ì¶”ê°€
           </button>
         </div>
 
         <div className="calendar-nav">
-          <button type="button" onClick={() => moveMonth(-1)} aria-label="ÀÌÀü ´Ş">¢¸</button>
+          <button type="button" onClick={() => moveMonth(-1)} aria-label="ì´ì „ ë‹¬">â—€</button>
           <strong>
-            {calendarMonth.getFullYear()}³â {calendarMonth.getMonth() + 1}¿ù
+            {calendarMonth.getFullYear()}ë…„ {calendarMonth.getMonth() + 1}ì›”
           </strong>
-          <button type="button" onClick={() => moveMonth(1)} aria-label="´ÙÀ½ ´Ş">¢º</button>
+          <button type="button" onClick={() => moveMonth(1)} aria-label="ë‹¤ìŒ ë‹¬">â–¶</button>
         </div>
 
         <div className="calendar-grid">
@@ -258,7 +258,7 @@ export default function HomeDashboard() {
                   {events.slice(0, 3).map((event) => (
                     <p key={event.id} title={event.title}>{event.title}</p>
                   ))}
-                  {events.length > 3 && <p>+{events.length - 3}°³</p>}
+                  {events.length > 3 && <p>+{events.length - 3}ê°œ</p>}
                 </div>
               </div>
             )
@@ -267,17 +267,17 @@ export default function HomeDashboard() {
 
         {!!monthlySchedules.length && (
           <div className="monthly-inline">
-            <strong>{calendarMonth.getMonth() + 1}¿ù ÀÏÁ¤</strong>
-            <span>{monthlySchedules.length}°Ç</span>
+            <strong>{calendarMonth.getMonth() + 1}ì›” ì¼ì •</strong>
+            <span>{monthlySchedules.length}ê±´</span>
           </div>
         )}
       </article>
 
       <article className="backend-note">
-        <h4>¼­¹ö ÀúÀå ¾È³»</h4>
+        <h4>ì„œë²„ ì €ì¥ ì•ˆë‚´</h4>
         <p>
-          ÇöÀç ÀÏÁ¤Àº `VITE_EVENTS_API_URL`·Î ÁöÁ¤ÇÑ Apps Script API¿¡ ÀúÀåµË´Ï´Ù.
-          6¸íÀÌ ÇÔ²² »ç¿ë °¡´ÉÇÑ °øÀ¯ ÀúÀå ±¸Á¶ÀÔ´Ï´Ù.
+          í˜„ì¬ ì¼ì •ì€ `VITE_EVENTS_API_URL`ë¡œ ì§€ì •í•œ Apps Script APIì— ì €ì¥ë©ë‹ˆë‹¤.
+          6ëª…ì´ í•¨ê»˜ ì‚¬ìš© ê°€ëŠ¥í•œ ê³µìœ  ì €ì¥ êµ¬ì¡°ì…ë‹ˆë‹¤.
         </p>
       </article>
     </section>
