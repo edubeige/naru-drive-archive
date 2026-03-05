@@ -450,9 +450,7 @@ export default function HomeDashboard() {
             <ul className="today-schedule-list">
               {todayEvents.map((event) => (
                 <li key={event.id}>
-                  <span className={`event-color-badge ${event.color}`}>
-                    {SCHEDULE_COLOR_OPTIONS.find((x) => x.value === event.color)?.label ?? '하늘'}
-                  </span>
+                  <span className={`today-color-dot ${event.color}`} aria-hidden="true" />
                   <strong>{event.title}</strong>
                 </li>
               ))}
@@ -648,3 +646,4 @@ export default function HomeDashboard() {
     </section>
   )
 }
+

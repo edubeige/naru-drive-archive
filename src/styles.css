@@ -1704,3 +1704,26 @@ input:focus, button:focus-visible, a:focus-visible {
     align-items: flex-start;
   }
 }
+
+.today-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  flex: 0 0 14px;
+}
+
+.today-color-dot.blue {
+  background: #9ec1ff;
+  border-color: #8db4ff;
+}
+
+.today-color-dot.yellow {
+  background: #f7d96a;
+  border-color: #e9c75b;
+}
+
+.today-color-dot.green {
+  background: #94dfaf;
+  border-color: #7bcea0;
+}
