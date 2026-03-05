@@ -57,6 +57,50 @@ function ensureApiUrl(): string {
   )
 }
 
+function normalizeDateToKey(value: unknown): string {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed
+    }
+
+    const parsed = new Date(trimmed)
+    if (!Number.isNaN(parsed.getTime())) {
+      const year = parsed.getFullYear()
+      const month = `${parsed.getMonth() + 1}`.padStart(2, '0')
+      const day = `${parsed.getDate()}`.padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear()
+    const month = `${value.getMonth() + 1}`.padStart(2, '0')
+    const day = `${value.getDate()}`.padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  return ''
+}
+
+function normalizeScheduleEvent(item: unknown): ScheduleEventItem | null {
+  if (!item || typeof item !== 'object') {
+    return null
+  }
+
+  const raw = item as Partial<ScheduleEventItem> & { date?: unknown }
+  const date = normalizeDateToKey(raw.date)
+  const id = String(raw.id ?? '').trim()
+  const title = String(raw.title ?? '').trim()
+  const createdAt = String(raw.createdAt ?? '').trim()
+
+  if (!id || !title || !date) {
+    return null
+  }
+
+  return { id, title, date, createdAt }
+}
+
 async function callApi(payload: ApiPayload): Promise<ApiResponse> {
   const url = ensureApiUrl()
   const form = new URLSearchParams()
@@ -88,9 +132,14 @@ class AppsScriptEventsRepository implements EventsRepository {
     const res = await callApi({ action: 'getAll' })
     const data = res.data as EventsSnapshot | undefined
 
+    const majorEvents = Array.isArray(data?.majorEvents) ? data.majorEvents : []
+    const scheduleEvents = Array.isArray(data?.scheduleEvents)
+      ? data.scheduleEvents.map(normalizeScheduleEvent).filter((item): item is ScheduleEventItem => item !== null)
+      : []
+
     return {
-      majorEvents: Array.isArray(data?.majorEvents) ? data?.majorEvents : [],
-      scheduleEvents: Array.isArray(data?.scheduleEvents) ? data?.scheduleEvents : [],
+      majorEvents,
+      scheduleEvents,
     }
   }
 
@@ -117,7 +166,13 @@ class AppsScriptEventsRepository implements EventsRepository {
     }
 
     const res = await callApi({ action: 'addScheduleEvent', date: trimmedDate, title: trimmedTitle })
-    return res.data as ScheduleEventItem
+    const normalized = normalizeScheduleEvent(res.data)
+
+    if (!normalized) {
+      throw new Error('Invalid schedule event response')
+    }
+
+    return normalized
   }
 
   async removeScheduleEvent(id: string): Promise<void> {

@@ -80,12 +80,10 @@ function doPost(e) {
 function parseBody(e) {
   const fromParams = e && e.parameter ? e.parameter : {};
 
-  // Form posts and query strings are parsed into e.parameter.
   if (fromParams && Object.keys(fromParams).length > 0) {
     return fromParams;
   }
 
-  // JSON fallback.
   if (e && e.postData && e.postData.contents) {
     const contents = String(e.postData.contents || '').trim();
     if (!contents) {
@@ -136,9 +134,33 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function normalizeDateValue(value, tz) {
+  if (value instanceof Date) {
+    return Utilities.formatDate(value, tz, 'yyyy-MM-dd');
+  }
+
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return '';
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    return Utilities.formatDate(parsed, tz, 'yyyy-MM-dd');
+  }
+
+  return raw;
+}
+
 function getAllData(ss) {
-  const major = readRows(ss.getSheetByName(SHEET_MAJOR), ['id', 'title', 'createdAt']);
-  const schedule = readRows(ss.getSheetByName(SHEET_SCHEDULE), ['id', 'date', 'title', 'createdAt']);
+  const tz = ss.getSpreadsheetTimeZone() || Session.getScriptTimeZone() || 'Asia/Seoul';
+
+  const major = readRows(ss.getSheetByName(SHEET_MAJOR), ['id', 'title', 'createdAt'], tz);
+  const schedule = readRows(ss.getSheetByName(SHEET_SCHEDULE), ['id', 'date', 'title', 'createdAt'], tz);
 
   major.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
   schedule.sort((a, b) => {
@@ -152,7 +174,7 @@ function getAllData(ss) {
   };
 }
 
-function readRows(sheet, keys) {
+function readRows(sheet, keys, tz) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) {
     return [];
@@ -164,7 +186,11 @@ function readRows(sheet, keys) {
     .map((row) => {
       const out = {};
       keys.forEach((key, i) => {
-        out[key] = row[i];
+        if (key === 'date') {
+          out[key] = normalizeDateValue(row[i], tz);
+        } else {
+          out[key] = row[i];
+        }
       });
       return out;
     });
@@ -185,16 +211,6 @@ function addMajorEvent(ss, title) {
 
   sheet.appendRow([created.id, created.title, created.createdAt]);
   return created;
-}
-
-function removeMajorEvent(ss, id) {
-  const targetId = String(id || '').trim();
-  if (!targetId) {
-    throw new Error('id is required');
-  }
-
-  const sheet = ss.getSheetByName(SHEET_MAJOR);
-  deleteById(sheet, targetId, 1);
 }
 
 function addScheduleEvent(ss, date, title) {
@@ -219,8 +235,21 @@ function addScheduleEvent(ss, date, title) {
     createdAt: nowIso(),
   };
 
-  sheet.appendRow([created.id, created.date, created.title, created.createdAt]);
+  const row = sheet.getLastRow() + 1;
+  sheet.getRange(row, 1, 1, 4).setValues([[created.id, created.date, created.title, created.createdAt]]);
+  sheet.getRange(row, 2).setNumberFormat('@');
+
   return created;
+}
+
+function removeMajorEvent(ss, id) {
+  const targetId = String(id || '').trim();
+  if (!targetId) {
+    throw new Error('id is required');
+  }
+
+  const sheet = ss.getSheetByName(SHEET_MAJOR);
+  deleteById(sheet, targetId, 1);
 }
 
 function removeScheduleEvent(ss, id) {
