@@ -764,9 +764,8 @@ input {
   padding: 0.56rem 0.68rem;
   background: #f8fbff;
   display: flex;
-  justify-content: center;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 0.6rem;
 }
 
@@ -1084,8 +1083,12 @@ input:focus, button:focus-visible, a:focus-visible {
   justify-content: flex-end;
 }
 
-.major-events-list li {
-  grid-template-columns: 1fr auto;
+.major-events-list li > span {
+  flex: 1;
+  text-align: left;
+  color: #1f3665;
+  font-weight: 700;
+  word-break: break-word;
 }
 
 .major-events-list li > input {
@@ -1093,7 +1096,7 @@ input:focus, button:focus-visible, a:focus-visible {
   border-radius: var(--radius-sm);
   padding: 0.52rem 0.66rem;
   width: 100%;
-  max-width: 420px;
+  max-width: none;
 }
 
 .action-button.info {
@@ -1131,12 +1134,13 @@ input:focus, button:focus-visible, a:focus-visible {
 
 @media (max-width: 760px) {
   .major-events-list li {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
     gap: 0.5rem;
   }
 
   .list-actions {
-    justify-content: flex-start;
+    justify-content: flex-end;
   }
 }
 
@@ -1934,3 +1938,8 @@ input:focus, button:focus-visible, a:focus-visible {
     width: 100%;
   }
 }
+
+
+
+
+

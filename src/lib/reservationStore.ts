@@ -96,12 +96,34 @@ function toNumber(value: unknown): number {
   return Number.isFinite(n) ? n : 0
 }
 
-function normalizeClassName(value: unknown): ClassName {
+function normalizeClassName(value: unknown, fallback: ClassName = '3-1'): ClassName {
   const text = String(value ?? '').trim()
+  if (!text) {
+    return fallback
+  }
+
   if (CLASS_NAMES.includes(text as ClassName)) {
     return text as ClassName
   }
-  return '3-1'
+
+  const compact = text.replace(/\s+/g, '')
+
+  const hyphenMatch = compact.match(/^3[-.]?([1-5])$/)
+  if (hyphenMatch?.[1]) {
+    return `3-${hyphenMatch[1]}` as ClassName
+  }
+
+  const koreanMatch = compact.match(/^3학년([1-5])반$/)
+  if (koreanMatch?.[1]) {
+    return `3-${koreanMatch[1]}` as ClassName
+  }
+
+  const genericMatch = compact.match(/3[^0-9]*([1-5])/)
+  if (genericMatch?.[1]) {
+    return `3-${genericMatch[1]}` as ClassName
+  }
+
+  return fallback
 }
 
 function normalizeItem(item: unknown): ItemRecord | null {
@@ -123,7 +145,7 @@ function normalizeItem(item: unknown): ItemRecord | null {
   }
 }
 
-function normalizeLoan(item: unknown): LoanRecord | null {
+function normalizeLoan(item: unknown, fallbackClass: ClassName = '3-1'): LoanRecord | null {
   if (!item || typeof item !== 'object') {
     return null
   }
@@ -161,7 +183,7 @@ function normalizeLoan(item: unknown): LoanRecord | null {
 
   return {
     id,
-    className: normalizeClassName(classValue),
+    className: normalizeClassName(classValue, fallbackClass),
     itemName,
     date,
     periodStart: toNumber(periodStartValue),
@@ -191,7 +213,7 @@ function normalizeInitData(data: unknown): ReservationInitData {
         .slice(0, 10)
     : []
   const openLoans = Array.isArray(raw.openLoans)
-    ? raw.openLoans.map(normalizeLoan).filter((i): i is LoanRecord => Boolean(i))
+    ? raw.openLoans.map((item) => normalizeLoan(item)).filter((i): i is LoanRecord => Boolean(i))
     : []
 
   return { items, topItems, openLoans }
@@ -279,7 +301,7 @@ class AppsScriptReservationsRepository implements ReservationsRepository {
       periodEnd: String(periodEnd),
     })
 
-    const normalized = normalizeLoan(res.data)
+    const normalized = normalizeLoan(res.data, className)
     if (!normalized) {
       throw new Error('잘못된 예약 응답입니다.')
     }
@@ -303,10 +325,15 @@ class AppsScriptReservationsRepository implements ReservationsRepository {
   async getOpenLoans(): Promise<LoanRecord[]> {
     const res = await callApi({ action: 'getOpenLoans' })
     const list = Array.isArray(res.data)
-      ? res.data.map(normalizeLoan).filter((item): item is LoanRecord => Boolean(item))
+      ? res.data.map((row) => normalizeLoan(row)).filter((item): item is LoanRecord => Boolean(item))
       : []
     return sortOpenLoans(list)
   }
 }
 
 export const reservationsRepository: ReservationsRepository = new AppsScriptReservationsRepository()
+
+
+
+
+
