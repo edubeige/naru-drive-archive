@@ -240,6 +240,32 @@ function folderMatches(node: FolderNode, query: string): boolean {
   return node.childrenFolders.some((child) => folderMatches(child, query))
 }
 
+function normalizeMaterialsResponse(payload: unknown): DriveItemRaw[] {
+  const candidate = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object' && Array.isArray((payload as { data?: unknown[] }).data)
+      ? (payload as { data: unknown[] }).data
+      : payload && typeof payload === 'object' && Array.isArray((payload as { items?: unknown[] }).items)
+        ? (payload as { items: unknown[] }).items
+        : []
+
+  const normalized = candidate.filter((item): item is DriveItemRaw => {
+    if (!item || typeof item !== 'object') {
+      return false
+    }
+
+    const row = item as Record<string, unknown>
+    return (
+      typeof row.name === 'string' &&
+      typeof row.type === 'string' &&
+      typeof row.url === 'string' &&
+      typeof row.path === 'string' &&
+      (row.type === 'folder' || row.type === 'file')
+    )
+  })
+
+  return normalized
+}
 function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('home')
   const [tree, setTree] = useState<DriveTree | null>(null)
@@ -336,19 +362,21 @@ function App() {
         throw new Error(`HTTP ${response.status}`)
       }
 
-      const json = (await response.json()) as DriveItemRaw[]
-      if (!Array.isArray(json) || !json.length) {
-        setTree(null)
-        setSelection({ subjectPath: null, semesterPath: null, unitPath: null, lessonPath: null })
-        return
+      const payload = (await response.json()) as unknown
+      const items = normalizeMaterialsResponse(payload)
+      if (!items.length) {
+        throw new Error('INVALID_MATERIALS_PAYLOAD')
       }
 
-      writeMaterialsCache(json)
-      applyTreeFromItems(json)
+      writeMaterialsCache(items)
+      applyTreeFromItems(items)
       setError(null)
-    } catch {
+    } catch (error) {
       if (!silent) {
-        setError('자료를 불러오지 못했습니다. 네트워크 상태 또는 API URL을 확인해 주세요.')
+        const message = error instanceof Error && error.message === 'INVALID_MATERIALS_PAYLOAD'
+          ? 'Invalid materials API response. Check VITE_API_URL points to the drive list webapp.'
+          : 'Failed to load materials. Check network and VITE_API_URL.'
+        setError(message)
         setTree(null)
       }
     } finally {
