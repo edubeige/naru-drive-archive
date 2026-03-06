@@ -130,16 +130,30 @@ function normalizeLoan(item: unknown): LoanRecord | null {
 
   const raw = item as Partial<LoanRecord> & {
     className?: unknown
+    class_name?: unknown
+    class?: unknown
     itemName?: unknown
+    item_name?: unknown
     date?: unknown
     periodStart?: unknown
+    period_start?: unknown
     periodEnd?: unknown
+    period_end?: unknown
     status?: unknown
+    returnedAt?: unknown
+    returned_at?: unknown
+    createdAt?: unknown
+    created_at?: unknown
   }
 
   const id = String(raw.id ?? '').trim()
-  const itemName = String(raw.itemName ?? '').trim()
+  const itemName = String(raw.itemName ?? raw.item_name ?? '').trim()
   const date = toDateKey(raw.date)
+  const classValue = raw.className ?? raw.class_name ?? raw.class
+  const periodStartValue = raw.periodStart ?? raw.period_start
+  const periodEndValue = raw.periodEnd ?? raw.period_end
+  const returnedAtValue = raw.returnedAt ?? raw.returned_at
+  const createdAtValue = raw.createdAt ?? raw.created_at
 
   if (!id || !itemName || !date) {
     return null
@@ -147,14 +161,14 @@ function normalizeLoan(item: unknown): LoanRecord | null {
 
   return {
     id,
-    className: normalizeClassName(raw.className),
+    className: normalizeClassName(classValue),
     itemName,
     date,
-    periodStart: toNumber(raw.periodStart),
-    periodEnd: toNumber(raw.periodEnd),
+    periodStart: toNumber(periodStartValue),
+    periodEnd: toNumber(periodEndValue),
     status: raw.status === 'returned' ? 'returned' : 'reserved',
-    returnedAt: String(raw.returnedAt ?? ''),
-    createdAt: String(raw.createdAt ?? ''),
+    returnedAt: String(returnedAtValue ?? ''),
+    createdAt: String(createdAtValue ?? ''),
   }
 }
 
