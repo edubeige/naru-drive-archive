@@ -1385,6 +1385,32 @@ input:focus, button:focus-visible, a:focus-visible {
   grid-column: 1 / -1;
 }
 
+.top-item-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+}
+
+.top-item-remove {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid #d2def8;
+  background: linear-gradient(180deg, #ffffff, #f1f6ff);
+  color: #5f729a;
+  font-size: 0.92rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.top-item-remove:hover {
+  background: linear-gradient(180deg, #fff3f3, #ffe8e8);
+  border-color: #f0c0c0;
+  color: #a24a4a;
+}
 .top-item-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1938,6 +1964,7 @@ input:focus, button:focus-visible, a:focus-visible {
     width: 100%;
   }
 }
+
 
 
 

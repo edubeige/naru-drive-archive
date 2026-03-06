@@ -96,6 +96,21 @@ function toNumber(value: unknown): number {
   return Number.isFinite(n) ? n : 0
 }
 
+function normalizeObjectKey(key: string): string {
+  return key.toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function pickField(raw: Record<string, unknown>, aliases: string[]): unknown {
+  const aliasSet = new Set(aliases.map((alias) => normalizeObjectKey(alias)))
+
+  for (const [key, value] of Object.entries(raw)) {
+    if (aliasSet.has(normalizeObjectKey(key))) {
+      return value
+    }
+  }
+
+  return undefined
+}
 function normalizeClassName(value: unknown, fallback: ClassName = '3-1'): ClassName {
   const text = String(value ?? '').trim()
   if (!text) {
@@ -150,32 +165,17 @@ function normalizeLoan(item: unknown, fallbackClass: ClassName = '3-1'): LoanRec
     return null
   }
 
-  const raw = item as Partial<LoanRecord> & {
-    className?: unknown
-    class_name?: unknown
-    class?: unknown
-    itemName?: unknown
-    item_name?: unknown
-    date?: unknown
-    periodStart?: unknown
-    period_start?: unknown
-    periodEnd?: unknown
-    period_end?: unknown
-    status?: unknown
-    returnedAt?: unknown
-    returned_at?: unknown
-    createdAt?: unknown
-    created_at?: unknown
-  }
+  const raw = item as Record<string, unknown>
 
-  const id = String(raw.id ?? '').trim()
-  const itemName = String(raw.itemName ?? raw.item_name ?? '').trim()
-  const date = toDateKey(raw.date)
-  const classValue = raw.className ?? raw.class_name ?? raw.class
-  const periodStartValue = raw.periodStart ?? raw.period_start
-  const periodEndValue = raw.periodEnd ?? raw.period_end
-  const returnedAtValue = raw.returnedAt ?? raw.returned_at
-  const createdAtValue = raw.createdAt ?? raw.created_at
+  const id = String(pickField(raw, ['id']) ?? '').trim()
+  const itemName = String(pickField(raw, ['itemName', 'item_name', 'item']) ?? '').trim()
+  const date = toDateKey(pickField(raw, ['date']))
+  const classValue = pickField(raw, ['className', 'class_name', 'class'])
+  const periodStartValue = pickField(raw, ['periodStart', 'period_start'])
+  const periodEndValue = pickField(raw, ['periodEnd', 'period_end'])
+  const statusValue = pickField(raw, ['status'])
+  const returnedAtValue = pickField(raw, ['returnedAt', 'returned_at'])
+  const createdAtValue = pickField(raw, ['createdAt', 'created_at'])
 
   if (!id || !itemName || !date) {
     return null
@@ -188,7 +188,7 @@ function normalizeLoan(item: unknown, fallbackClass: ClassName = '3-1'): LoanRec
     date,
     periodStart: toNumber(periodStartValue),
     periodEnd: toNumber(periodEndValue),
-    status: raw.status === 'returned' ? 'returned' : 'reserved',
+    status: statusValue === 'returned' ? 'returned' : 'reserved',
     returnedAt: String(returnedAtValue ?? ''),
     createdAt: String(createdAtValue ?? ''),
   }
@@ -332,6 +332,9 @@ class AppsScriptReservationsRepository implements ReservationsRepository {
 }
 
 export const reservationsRepository: ReservationsRepository = new AppsScriptReservationsRepository()
+
+
+
 
 
 

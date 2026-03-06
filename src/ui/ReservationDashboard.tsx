@@ -222,6 +222,19 @@ export default function ReservationDashboard() {
       setSaving(false)
     }
   }
+  const removeTopItem = (name: string) => {
+    const target = name.trim()
+    if (!target) {
+      return
+    }
+
+    setTopItems((prev) => prev.filter((item) => item !== target))
+    setItems((prev) => prev.filter((item) => item.itemName !== target))
+
+    if (itemName.trim() === target) {
+      setItemName('')
+    }
+  }
 
   return (
     <section className="reservation-dashboard" aria-label="물품 예약">
@@ -298,9 +311,20 @@ export default function ReservationDashboard() {
 
         <div className="top-item-chips" aria-label="최근 사용 물품">
           {topItems.slice(0, 10).map((name) => (
-            <button key={name} type="button" className="summary-chip chip-button" onClick={() => setItemName(name)}>
-              {name}
-            </button>
+            <div key={name} className="top-item-chip">
+              <button type="button" className="summary-chip chip-button" onClick={() => setItemName(name)}>
+                {name}
+              </button>
+              <button
+                type="button"
+                className="top-item-remove"
+                onClick={() => removeTopItem(name)}
+                aria-label={`${name} 목록에서 삭제`}
+                title="목록에서 삭제"
+              >
+                ×
+              </button>
+            </div>
           ))}
           {!topItems.length && <p className="empty-text">최근 사용 물품이 아직 없습니다.</p>}
         </div>
@@ -377,6 +401,10 @@ export default function ReservationDashboard() {
     </section>
   )
 }
+
+
+
+
 
 
 
