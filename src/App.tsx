@@ -266,6 +266,29 @@ function normalizeMaterialsResponse(payload: unknown): DriveItemRaw[] {
 
   return normalized
 }
+async function fetchMaterialsItems(apiUrl: string): Promise<{ items: DriveItemRaw[]; source: 'direct' | 'actionGetAll' }> {
+  const directResponse = await fetch(apiUrl)
+  if (!directResponse.ok) {
+    throw new Error(`HTTP ${directResponse.status}`)
+  }
+
+  const directPayload = (await directResponse.json()) as unknown
+  const directItems = normalizeMaterialsResponse(directPayload)
+  if (directItems.length) {
+    return { items: directItems, source: 'direct' }
+  }
+
+  const fallbackResponse = await fetch(`${apiUrl}?action=getAll`)
+  if (fallbackResponse.ok) {
+    const fallbackPayload = (await fallbackResponse.json()) as unknown
+    const fallbackItems = normalizeMaterialsResponse(fallbackPayload)
+    if (fallbackItems.length) {
+      return { items: fallbackItems, source: 'actionGetAll' }
+    }
+  }
+
+  throw new Error('INVALID_MATERIALS_PAYLOAD')
+}
 function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('home')
   const [tree, setTree] = useState<DriveTree | null>(null)
@@ -357,25 +380,15 @@ function App() {
     }
 
     try {
-      const response = await fetch(apiUrl)
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-
-      const payload = (await response.json()) as unknown
-      const items = normalizeMaterialsResponse(payload)
-      if (!items.length) {
-        throw new Error('INVALID_MATERIALS_PAYLOAD')
-      }
-
+      const { items } = await fetchMaterialsItems(apiUrl)
       writeMaterialsCache(items)
       applyTreeFromItems(items)
       setError(null)
     } catch (error) {
       if (!silent) {
         const message = error instanceof Error && error.message === 'INVALID_MATERIALS_PAYLOAD'
-          ? 'Invalid materials API response. Check VITE_API_URL points to the drive list webapp.'
-          : 'Failed to load materials. Check network and VITE_API_URL.'
+          ? '?? API ?? ??? ????. VITE_API_URL? ???? ??? ???? ??? ???.'
+          : '??? ???? ?????. ???? ?? VITE_API_URL? ??? ???.'
         setError(message)
         setTree(null)
       }
