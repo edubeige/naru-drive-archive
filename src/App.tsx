@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './styles.css'
 import {
   buildDriveTree,
@@ -25,7 +25,7 @@ type AppTab = 'home' | 'materials' | 'reservation'
 const FALLBACK_API_URL =
   'https://script.google.com/macros/s/AKfycbzONOmQfiiuOEn7_jeOChPkzS-_qAsuFfMDreUs3o43OLOF6e8GezyDny8yqtL_TUBR6Q/exec'
 
-const SEMESTER_NAMES = ['1학기', '2학기']
+const SEMESTER_NAMES = ['1�б�', '2�б�']
 const MATERIALS_CACHE_KEY = 'naru_materials_cache_v1'
 const MATERIALS_CACHE_TTL_MS = 1000 * 60 * 10
 const MATERIALS_UPLOAD_MAX_MB = 20
@@ -48,14 +48,14 @@ const MATERIALS_UPLOAD_ALLOWED_EXT = [
 ]
 
 const FILE_ICON_MAP: Record<FileIconKey, string> = {
-  presentation: '📊',
-  pdf: '📕',
-  hwp: '📘',
-  doc: '📝',
-  sheet: '📗',
-  video: '🎬',
-  archive: '🗜️',
-  file: '📄',
+  presentation: '??',
+  pdf: '??',
+  hwp: '??',
+  doc: '??',
+  sheet: '??',
+  video: '??',
+  archive: '???',
+  file: '??',
 }
 
 interface MaterialsCachePayload {
@@ -104,12 +104,12 @@ function fileToBase64(file: File): Promise<string> {
       const raw = typeof reader.result === 'string' ? reader.result : ''
       const base64 = raw.includes(',') ? raw.split(',')[1] : raw
       if (!base64) {
-        reject(new Error('파일 인코딩 실패'))
+        reject(new Error('���� ���ڵ� ����'))
         return
       }
       resolve(base64)
     }
-    reader.onerror = () => reject(new Error('파일 읽기 실패'))
+    reader.onerror = () => reject(new Error('���� �б� ����'))
     reader.readAsDataURL(file)
   })
 }
@@ -156,7 +156,7 @@ function createSelectionForSubject(subject: FolderNode | undefined): SelectionSt
 
 function getBreadcrumb(selection: SelectionState, tree: DriveTree | null): string {
   if (!tree || !selection.subjectPath) {
-    return '선택된 경로가 없습니다.'
+    return '���õ� ��ΰ� �����ϴ�.'
   }
 
   const labels = [selection.subjectPath, selection.semesterPath, selection.unitPath, selection.lessonPath]
@@ -164,7 +164,7 @@ function getBreadcrumb(selection: SelectionState, tree: DriveTree | null): strin
     .map((path) => tree.nodesByPath.get(path)?.name)
     .filter((name): name is string => Boolean(name))
 
-  return labels.length ? labels.join(' > ') : '선택된 경로가 없습니다.'
+  return labels.length ? labels.join(' > ') : '���õ� ��ΰ� �����ϴ�.'
 }
 
 function formatDate(isoDate: string): string {
@@ -537,7 +537,7 @@ function App() {
     }
 
     if (!uploadFile || !selectedFolderPath) {
-      setUploadMessage('업로드할 파일과 대상 폴더를 먼저 선택해 주세요.')
+      setUploadMessage('���ε��� ���ϰ� ��� ������ ���� ������ �ּ���.')
       return
     }
 
@@ -577,11 +577,23 @@ function App() {
         throw new Error(`HTTP ${response.status}`)
       }
 
+      const result = (await response.json()) as {
+        success?: boolean
+        message?: string
+        data?: { folderName?: string; targetPath?: string }
+      }
+
+      if (!result?.success) {
+        throw new Error(result?.message || 'Upload API returned success=false')
+      }
+
       await fetchData({ silent: true })
       setUploadFile(null)
-      setUploadMessage('업로드 완료: 드라이브에 파일이 저장되었습니다.')
-    } catch {
-      setUploadMessage('업로드 실패: API(앱스스크립트) 업로드 엔드포인트를 확인해 주세요.')
+      const location = result.data?.targetPath || result.data?.folderName
+      setUploadMessage(location ? `Upload complete: ${location}` : 'Upload complete: file stored in Drive.')
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : 'unknown error'
+      setUploadMessage(`Upload failed: ${detail}`)
     } finally {
       setIsUploading(false)
     }
@@ -597,18 +609,18 @@ function App() {
             type="button"
             className="menu-button"
             onClick={() => setIsSidebarOpen((prev) => !prev)}
-            aria-label="사이드바 열기"
+            aria-label="���̵�� ����"
           >
-            ☰
+            ?
           </button>
           <div>
             <p className="site-kicker">Google Drive Archive</p>
-            <h1>2026 나루초 3학년 연구실</h1>
+            <h1>2026 ������ 3�г� ������</h1>
           </div>
         </div>
 
         {activeTab === 'materials' && (
-          <div className="semester-tabs" role="tablist" aria-label="학기 선택">
+          <div className="semester-tabs" role="tablist" aria-label="�б� ����">
             {SEMESTER_NAMES.map((semesterName) => {
               const semesterNode = availableSemesters.find((node) => node.name === semesterName)
               const disabled = !semesterNode
@@ -636,11 +648,11 @@ function App() {
         <button
           type="button"
           className={`lnb-backdrop ${isSidebarOpen ? 'show' : ''}`}
-          aria-label="사이드바 닫기"
+          aria-label="���̵�� �ݱ�"
           onClick={() => setIsSidebarOpen(false)}
         />
         <aside className={`lnb ${isSidebarOpen ? 'open' : ''}`}>
-          <div className="sidebar-tabs" role="tablist" aria-label="페이지 탭">
+          <div className="sidebar-tabs" role="tablist" aria-label="������ ��">
             <button
               type="button"
               role="tab"
@@ -651,7 +663,7 @@ function App() {
                 setIsSidebarOpen(false)
               }}
             >
-              홈
+              Ȩ
             </button>
             <button
               type="button"
@@ -663,7 +675,7 @@ function App() {
                 setIsSidebarOpen(false)
               }}
             >
-              과목 자료
+              ���� �ڷ�
             </button>
             <button
               type="button"
@@ -675,25 +687,25 @@ function App() {
                 setIsSidebarOpen(false)
               }}
             >
-              예약
+              ����
             </button>
           </div>
 
           {activeTab === 'materials' && (
             <section>
               <div className="nav-title-row">
-                <h2>과목 탐색</h2>
+                <h2>���� Ž��</h2>
                 <div className="nav-fold-actions">
-                  <button type="button" onClick={expandAllSubjects}>전체 펼침</button>
-                  <button type="button" onClick={collapseAllSubjects}>전체 접기</button>
+                  <button type="button" onClick={expandAllSubjects}>��ü ��ħ</button>
+                  <button type="button" onClick={collapseAllSubjects}>��ü ����</button>
                 </div>
               </div>
               <input
                 className="nav-search"
                 value={navQuery}
                 onChange={(event) => setNavQuery(event.target.value)}
-                placeholder="과목, 단원, 차시, 파일 검색"
-                aria-label="탐색 검색"
+                placeholder="����, �ܿ�, ����, ���� �˻�"
+                aria-label="Ž�� �˻�"
               />
 
               <ul className="subject-list">
@@ -717,10 +729,10 @@ function App() {
                         <button
                           type="button"
                           className="subject-toggle"
-                          aria-label={`${subject.name} 접기/펼치기`}
+                          aria-label={`${subject.name} ����/��ġ��`}
                           onClick={() => toggleSubject(subject.fullPath)}
                         >
-                          {isSubjectExpanded ? '▾' : '▸'}
+                          {isSubjectExpanded ? '?' : '?'}
                         </button>
                       </div>
 
@@ -760,7 +772,7 @@ function App() {
                                             onClick={() => handleUnitClick(unit.fullPath)}
                                           >
                                             <span>{unit.name}</span>
-                                            {unit.childrenFolders.length > 0 && <span>{isExpanded ? '▾' : '▸'}</span>}
+                                            {unit.childrenFolders.length > 0 && <span>{isExpanded ? '?' : '?'}</span>}
                                           </button>
 
                                           {isExpanded && unit.childrenFolders.length > 0 && (
@@ -793,16 +805,16 @@ function App() {
                 })}
               </ul>
 
-              {!visibleSubjects.length && <p className="no-search-result">검색 결과가 없습니다.</p>}
+              {!visibleSubjects.length && <p className="no-search-result">�˻� ����� �����ϴ�.</p>}
             </section>
           )}
 
 
           {activeTab === 'reservation' && (
             <section className="home-sidebar-note">
-              <h2>예약 안내</h2>
-              <p>학급(3-1~3-5)과 물품, 날짜, 교시(1~6)로 예약을 등록합니다.</p>
-              <p>반납 완료 버튼으로 미반납 목록을 바로 정리할 수 있습니다.</p>
+              <h2>���� �ȳ�</h2>
+              <p>�б�(3-1~3-5)�� ��ǰ, ��¥, ����(1~6)�� ������ ����մϴ�.</p>
+              <p>�ݳ� �Ϸ� ��ư���� �̹ݳ� ����� �ٷ� ������ �� �ֽ��ϴ�.</p>
             </section>
           )}
         </aside>
@@ -811,14 +823,14 @@ function App() {
           {activeTab === 'materials' && (
             <>
               <div className="content-header">
-                <p className="breadcrumb-label">현재 위치</p>
+                <p className="breadcrumb-label">���� ��ġ</p>
                 <h2>{breadcrumb}</h2>
                 <div className="materials-toolbar">
                   <div className="summary-chips">
-                    <span className="summary-chip">파일 {visibleFiles.length}개</span>
+                    <span className="summary-chip">���� {visibleFiles.length}��</span>
                     {selectedFolderNode?.url && (
                       <a className="summary-chip link" href={selectedFolderNode.url} target="_blank" rel="noopener noreferrer">
-                        원본 폴더 열기
+                        ���� ���� ����
                       </a>
                     )}
                   </div>
@@ -839,7 +851,7 @@ function App() {
                         disabled={isUploading || !uploadFile || !selectedFolderPath}
                         onClick={() => void handleUploadToDrive()}
                       >
-                        {isUploading ? '업로드 중...' : '드라이브 업로드'}
+                        {isUploading ? '���ε� ��...' : '����̺� ���ε�'}
                       </button>
                     </div>
                   )}
@@ -847,20 +859,20 @@ function App() {
                 {materialsUploadEnabled && uploadMessage && <p className="upload-message">{uploadMessage}</p>}
               </div>
 
-              {isLoading && <div className="state-box">자료를 불러오는 중입니다...</div>}
+              {isLoading && <div className="state-box">�ڷḦ �ҷ����� ���Դϴ�...</div>}
               {!isLoading && error && (
                 <div className="state-box error">
                   <p>{error}</p>
                   <button type="button" className="retry-button" onClick={() => void fetchData()}>
-                    다시 시도
+                    �ٽ� �õ�
                   </button>
                 </div>
               )}
-              {!isLoading && !error && !tree && <div className="state-box">표시할 자료가 없습니다.</div>}
-              {!isLoading && !error && tree && !visibleFiles.length && <div className="state-box">조건에 맞는 파일이 없습니다.</div>}
+              {!isLoading && !error && !tree && <div className="state-box">ǥ���� �ڷᰡ �����ϴ�.</div>}
+              {!isLoading && !error && tree && !visibleFiles.length && <div className="state-box">���ǿ� �´� ������ �����ϴ�.</div>}
 
               {!isLoading && !error && !!visibleFiles.length && (
-                <section className="file-list" aria-label="자료 목록">
+                <section className="file-list" aria-label="�ڷ� ���">
                   {visibleFiles.map((file) => {
                     const iconKey = getFileIconKey(file.ext || file.name)
                     const rowPreviewUrl = getPreviewUrl(file)
@@ -871,7 +883,7 @@ function App() {
                           <span className="file-icon" aria-hidden="true">{FILE_ICON_MAP[iconKey]}</span>
                           <div>
                             <p className="file-name">{file.name}</p>
-                            <p className="file-meta">수정일: {formatDate(file.lastUpdated)}</p>
+                            <p className="file-meta">������: {formatDate(file.lastUpdated)}</p>
                           </div>
                         </div>
 
@@ -881,16 +893,16 @@ function App() {
                             type="button"
                             className="action-button primary"
                             disabled={!rowPreviewUrl}
-                            aria-label={`${file.name} 미리보기`}
+                            aria-label={`${file.name} �̸�����`}
                             onClick={() => setPreviewFile(file)}
                           >
-                            미리보기
+                            �̸�����
                           </button>
-                          <a className="action-button" href={getDownloadUrl(file)} target="_blank" rel="noopener noreferrer" aria-label={`${file.name} 다운로드`}>
-                            다운로드
+                          <a className="action-button" href={getDownloadUrl(file)} target="_blank" rel="noopener noreferrer" aria-label={`${file.name} �ٿ�ε�`}>
+                            �ٿ�ε�
                           </a>
-                          <a className="action-button" href={file.url} target="_blank" rel="noopener noreferrer" aria-label={`${file.name} 새 창`}>
-                            새 창
+                          <a className="action-button" href={file.url} target="_blank" rel="noopener noreferrer" aria-label={`${file.name} �� â`}>
+                            �� â
                           </a>
                         </div>
                       </article>
@@ -907,26 +919,26 @@ function App() {
       </div>
 
       {previewFile && (
-        <div className="preview-overlay" role="dialog" aria-modal="true" aria-label="파일 미리보기">
+        <div className="preview-overlay" role="dialog" aria-modal="true" aria-label="���� �̸�����">
           <div className="preview-modal">
             <div className="preview-header">
               <h3>{previewFile.name}</h3>
-              <button type="button" className="close-button" onClick={() => setPreviewFile(null)} aria-label="미리보기 닫기">
-                ✕
+              <button type="button" className="close-button" onClick={() => setPreviewFile(null)} aria-label="�̸����� �ݱ�">
+                ?
               </button>
             </div>
 
             <div className="preview-body">
               {previewUrl ? (
-                <iframe title={`${previewFile.name} 미리보기`} src={previewUrl} className="preview-frame" />
+                <iframe title={`${previewFile.name} �̸�����`} src={previewUrl} className="preview-frame" />
               ) : (
-                <p>이 파일 형식은 미리보기를 지원하지 않습니다. 새 창으로 열어 주세요.</p>
+                <p>�� ���� ������ �̸����⸦ �������� �ʽ��ϴ�. �� â���� ���� �ּ���.</p>
               )}
             </div>
 
             <div className="preview-footer">
-              <a className="action-button" href={getDownloadUrl(previewFile)} target="_blank" rel="noopener noreferrer">다운로드</a>
-              <a className="action-button" href={previewFile.url} target="_blank" rel="noopener noreferrer">새 탭</a>
+              <a className="action-button" href={getDownloadUrl(previewFile)} target="_blank" rel="noopener noreferrer">�ٿ�ε�</a>
+              <a className="action-button" href={previewFile.url} target="_blank" rel="noopener noreferrer">�� ��</a>
             </div>
           </div>
         </div>
@@ -936,6 +948,7 @@ function App() {
 }
 
 export default App
+
 
 
 
