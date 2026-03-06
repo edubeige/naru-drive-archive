@@ -219,10 +219,11 @@ function normalizeInitData(data: unknown): ReservationInitData {
   }
 
   const items = Array.isArray(raw.items) ? raw.items.map((item) => normalizeItem(item)).filter((i): i is ItemRecord => Boolean(i)) : []
+  const itemNameSet = new Set(items.map((item) => item.itemName))
   const topItems = Array.isArray(raw.topItems)
     ? raw.topItems
         .map((x) => String(x ?? '').trim())
-        .filter(Boolean)
+        .filter((name) => Boolean(name) && itemNameSet.has(name))
         .slice(0, 10)
     : []
   const openLoans = Array.isArray(raw.openLoans)
@@ -354,4 +355,5 @@ class AppsScriptReservationsRepository implements ReservationsRepository {
 }
 
 export const reservationsRepository: ReservationsRepository = new AppsScriptReservationsRepository()
+
 
