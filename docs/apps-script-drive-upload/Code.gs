@@ -9,7 +9,7 @@
 
 const ROOT_FOLDER_ID = ''; // e.g. '1AbCdEfGhIjKlMnOp'
 const PATH_DELIMITER = ' > ';
-const MAX_UPLOAD_MB = 8;
+const MAX_UPLOAD_MB = 20;
 
 function doGet(e) {
   try {
@@ -171,3 +171,4 @@ function jsonResponse(payload) {
     .createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
 }
+

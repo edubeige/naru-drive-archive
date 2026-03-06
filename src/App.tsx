@@ -28,6 +28,24 @@ const FALLBACK_API_URL =
 const SEMESTER_NAMES = ['1학기', '2학기']
 const MATERIALS_CACHE_KEY = 'naru_materials_cache_v1'
 const MATERIALS_CACHE_TTL_MS = 1000 * 60 * 10
+const MATERIALS_UPLOAD_MAX_MB = 20
+const MATERIALS_UPLOAD_MAX_BYTES = MATERIALS_UPLOAD_MAX_MB * 1024 * 1024
+const MATERIALS_UPLOAD_ALLOWED_EXT = [
+  'pdf',
+  'ppt',
+  'pptx',
+  'hwp',
+  'hwpx',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'zip',
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+]
 
 const FILE_ICON_MAP: Record<FileIconKey, string> = {
   presentation: '📊',
@@ -94,6 +112,11 @@ function fileToBase64(file: File): Promise<string> {
     reader.onerror = () => reject(new Error('파일 읽기 실패'))
     reader.readAsDataURL(file)
   })
+}
+
+function getFileExtension(fileName: string): string {
+  const matched = /\.([a-zA-Z0-9]+)$/.exec(fileName)
+  return matched ? matched[1].toLowerCase() : ''
 }
 
 function hasSemesterChildren(subject: FolderNode): boolean {
@@ -456,6 +479,30 @@ function App() {
   }
 
 
+  const handleUploadFileChange = (file: File | null) => {
+    if (!file) {
+      setUploadFile(null)
+      setUploadMessage(null)
+      return
+    }
+
+    const ext = getFileExtension(file.name)
+    if (!MATERIALS_UPLOAD_ALLOWED_EXT.includes(ext)) {
+      setUploadFile(null)
+      setUploadMessage(`Unsupported file type: ${ext || 'none'}`)
+      return
+    }
+
+    if (file.size > MATERIALS_UPLOAD_MAX_BYTES) {
+      setUploadFile(null)
+      setUploadMessage(`File too large: max ${MATERIALS_UPLOAD_MAX_MB}MB`)
+      return
+    }
+
+    setUploadFile(file)
+    setUploadMessage(null)
+  }
+
   const handleUploadToDrive = async () => {
     if (!materialsUploadEnabled) {
       return
@@ -463,6 +510,17 @@ function App() {
 
     if (!uploadFile || !selectedFolderPath) {
       setUploadMessage('업로드할 파일과 대상 폴더를 먼저 선택해 주세요.')
+      return
+    }
+
+    const ext = getFileExtension(uploadFile.name)
+    if (!MATERIALS_UPLOAD_ALLOWED_EXT.includes(ext)) {
+      setUploadMessage(`Unsupported file type: ${ext || 'none'}`)
+      return
+    }
+
+    if (uploadFile.size > MATERIALS_UPLOAD_MAX_BYTES) {
+      setUploadMessage(`File too large: max ${MATERIALS_UPLOAD_MAX_MB}MB`)
       return
     }
 
@@ -742,7 +800,8 @@ function App() {
                       <label className="upload-file-label">
                         <input
                           type="file"
-                          onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
+                          accept=".pdf,.ppt,.pptx,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.zip,.jpg,.jpeg,.png,.gif"
+                          onChange={(event) => handleUploadFileChange(event.target.files?.[0] ?? null)}
                           disabled={isUploading}
                         />
                       </label>

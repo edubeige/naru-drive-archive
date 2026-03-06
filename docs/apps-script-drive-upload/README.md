@@ -35,6 +35,7 @@ VITE_ENABLE_MATERIALS_UPLOAD=false
 - Apps Script가 대상 폴더를 찾아 Drive에 파일 생성
 
 ## 5) 제한/주의
-- 기본 최대 업로드 크기: `8MB` (`MAX_UPLOAD_MB`)
+- 기본 최대 업로드 크기: `20MB` (`MAX_UPLOAD_MB`)
 - Apps Script/브라우저 base64 전송 특성상 큰 파일은 느릴 수 있음
 - 큰 파일(PPT 영상 등)은 기존처럼 Drive에서 직접 업로드 권장
+
