@@ -114,6 +114,14 @@ function pickField(raw: Record<string, unknown>, aliases: string[]): unknown {
 }
 
 function normalizeClassName(value: unknown, fallback: ClassName = '3-1'): ClassName {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const month = value.getMonth() + 1
+    const day = value.getDate()
+    if (month === 3 && day >= 1 && day <= 5) {
+      return `3-${day}` as ClassName
+    }
+  }
+
   const text = String(value ?? '').trim()
   if (!text) {
     return fallback
@@ -121,6 +129,26 @@ function normalizeClassName(value: unknown, fallback: ClassName = '3-1'): ClassN
 
   if (CLASS_NAMES.includes(text as ClassName)) {
     return text as ClassName
+  }
+
+  const compact = text.replace(/\s+/g, '')
+  const simpleMatch = compact.match(/^3[-./]([1-5])$/)
+  if (simpleMatch) {
+    return `3-${simpleMatch[1]}` as ClassName
+  }
+
+  const koLike = compact.match(/3\D*([1-5])\D*$/)
+  if (koLike) {
+    return `3-${koLike[1]}` as ClassName
+  }
+
+  const parsed = new Date(text)
+  if (!Number.isNaN(parsed.getTime())) {
+    const month = parsed.getMonth() + 1
+    const day = parsed.getDate()
+    if (month === 3 && day >= 1 && day <= 5) {
+      return `3-${day}` as ClassName
+    }
   }
 
   return fallback
@@ -326,3 +354,4 @@ class AppsScriptReservationsRepository implements ReservationsRepository {
 }
 
 export const reservationsRepository: ReservationsRepository = new AppsScriptReservationsRepository()
+
