@@ -45,6 +45,11 @@ function doPost(e) {
         return jsonResponse({ success: true, data: returned });
       }
 
+      case 'removeItem': {
+        const removed = removeItem(ss, body.itemName);
+        return jsonResponse({ success: true, data: removed });
+      }
+
       default:
         throw new Error('Unsupported action: ' + action);
     }
@@ -321,6 +326,38 @@ function createLoan(ss, input) {
   ]);
 
   return created;
+}
+
+function removeItem(ss, itemName) {
+  const target = String(itemName || '').trim();
+  if (!target) {
+    throw new Error('itemName is required');
+  }
+
+  const openLoans = getOpenLoans(ss);
+  const inUse = openLoans.some(function (loan) {
+    return String(loan.itemName || '').trim() === target;
+  });
+
+  if (inUse) {
+    throw new Error('현재 미반납 예약이 있어 삭제할 수 없습니다.');
+  }
+
+  const sheet = ss.getSheetByName(SHEET_ITEMS);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { itemName: target, removed: false };
+  }
+
+  const values = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  for (let i = values.length - 1; i >= 0; i--) {
+    if (String(values[i][0]).trim() === target) {
+      sheet.deleteRow(i + 2);
+      return { itemName: target, removed: true };
+    }
+  }
+
+  return { itemName: target, removed: false };
 }
 
 function returnLoan(ss, id) {

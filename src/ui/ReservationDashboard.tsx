@@ -222,17 +222,32 @@ export default function ReservationDashboard() {
       setSaving(false)
     }
   }
-  const removeTopItem = (name: string) => {
+  const removeTopItem = async (name: string) => {
     const target = name.trim()
     if (!target) {
       return
     }
+
+    const prevTopItems = topItems
+    const prevItems = items
 
     setTopItems((prev) => prev.filter((item) => item !== target))
     setItems((prev) => prev.filter((item) => item.itemName !== target))
 
     if (itemName.trim() === target) {
       setItemName('')
+    }
+
+    setSaving(true)
+    try {
+      await reservationsRepository.removeItem(target)
+      setError(null)
+    } catch (e) {
+      setTopItems(prevTopItems)
+      setItems(prevItems)
+      setError(e instanceof Error ? e.message : '물품 삭제에 실패했습니다.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -318,7 +333,8 @@ export default function ReservationDashboard() {
               <button
                 type="button"
                 className="top-item-remove"
-                onClick={() => removeTopItem(name)}
+                onClick={() => void removeTopItem(name)}
+                disabled={saving || loading}
                 aria-label={`${name} 목록에서 삭제`}
                 title="목록에서 삭제"
               >
@@ -401,6 +417,9 @@ export default function ReservationDashboard() {
     </section>
   )
 }
+
+
+
 
 
 

@@ -38,13 +38,14 @@ export interface ReservationsRepository {
   }): Promise<LoanRecord>
   returnLoan(id: string): Promise<LoanRecord>
   getOpenLoans(): Promise<LoanRecord[]>
+  removeItem(itemName: string): Promise<void>
 }
 
 const RESERVATION_API_URL = import.meta.env.VITE_RESERVATION_API_URL as string | undefined
 const CLASS_NAMES: ClassName[] = ['3-1', '3-2', '3-3', '3-4', '3-5']
 
 interface ApiPayload {
-  action: 'getInitData' | 'createLoan' | 'returnLoan' | 'getOpenLoans'
+  action: 'getInitData' | 'createLoan' | 'returnLoan' | 'getOpenLoans' | 'removeItem'
   id?: string
   className?: string
   itemName?: string
@@ -111,6 +112,7 @@ function pickField(raw: Record<string, unknown>, aliases: string[]): unknown {
 
   return undefined
 }
+
 function normalizeClassName(value: unknown, fallback: ClassName = '3-1'): ClassName {
   const text = String(value ?? '').trim()
   if (!text) {
@@ -121,23 +123,6 @@ function normalizeClassName(value: unknown, fallback: ClassName = '3-1'): ClassN
     return text as ClassName
   }
 
-  const compact = text.replace(/\s+/g, '')
-
-  const hyphenMatch = compact.match(/^3[-.]?([1-5])$/)
-  if (hyphenMatch?.[1]) {
-    return `3-${hyphenMatch[1]}` as ClassName
-  }
-
-  const koreanMatch = compact.match(/^3학년([1-5])반$/)
-  if (koreanMatch?.[1]) {
-    return `3-${koreanMatch[1]}` as ClassName
-  }
-
-  const genericMatch = compact.match(/3[^0-9]*([1-5])/)
-  if (genericMatch?.[1]) {
-    return `3-${genericMatch[1]}` as ClassName
-  }
-
   return fallback
 }
 
@@ -146,17 +131,17 @@ function normalizeItem(item: unknown): ItemRecord | null {
     return null
   }
 
-  const raw = item as Partial<ItemRecord> & { itemName?: unknown; totalQty?: unknown }
-  const itemName = String(raw.itemName ?? '').trim()
+  const raw = item as Record<string, unknown>
+  const itemName = String(pickField(raw, ['itemName', 'item_name']) ?? '').trim()
   if (!itemName) {
     return null
   }
 
   return {
     itemName,
-    totalQty: toNumber(raw.totalQty) || 1,
-    createdAt: String(raw.createdAt ?? ''),
-    updatedAt: String(raw.updatedAt ?? ''),
+    totalQty: toNumber(pickField(raw, ['totalQty', 'total_qty'])) || 1,
+    createdAt: String(pickField(raw, ['createdAt', 'created_at']) ?? ''),
+    updatedAt: String(pickField(raw, ['updatedAt', 'updated_at']) ?? ''),
   }
 }
 
@@ -205,7 +190,7 @@ function normalizeInitData(data: unknown): ReservationInitData {
     openLoans?: unknown[]
   }
 
-  const items = Array.isArray(raw.items) ? raw.items.map(normalizeItem).filter((i): i is ItemRecord => Boolean(i)) : []
+  const items = Array.isArray(raw.items) ? raw.items.map((item) => normalizeItem(item)).filter((i): i is ItemRecord => Boolean(i)) : []
   const topItems = Array.isArray(raw.topItems)
     ? raw.topItems
         .map((x) => String(x ?? '').trim())
@@ -329,14 +314,15 @@ class AppsScriptReservationsRepository implements ReservationsRepository {
       : []
     return sortOpenLoans(list)
   }
+
+  async removeItem(itemName: string): Promise<void> {
+    const name = itemName.trim()
+    if (!name) {
+      throw new Error('삭제할 물품명이 필요합니다.')
+    }
+
+    await callApi({ action: 'removeItem', itemName: name })
+  }
 }
 
 export const reservationsRepository: ReservationsRepository = new AppsScriptReservationsRepository()
-
-
-
-
-
-
-
-

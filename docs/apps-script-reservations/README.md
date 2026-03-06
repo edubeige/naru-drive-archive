@@ -57,3 +57,9 @@ VITE_RESERVATION_API_URL=https://script.google.com/macros/s/XXXXXXXXXXXX/exec
 
 ### getOpenLoans
 - `action=getOpenLoans`
+
+### removeItem
+- ction=removeItem`r
+- itemName=ㄷㄷㄷ`r
+- 주의: 해당 물품에 미반납(eserved) 예약이 있으면 삭제 실패
+
