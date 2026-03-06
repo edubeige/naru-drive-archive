@@ -1,4 +1,4 @@
-﻿name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -18,9 +18,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_API_URL: https://script.google.com/macros/s/AKfycbzONOmQfiiuOEn7_jeOChPkzS-_qAsuFfMDreUs3o43OLOF6e8GezyDny8yqtL_TUBR6Q/exec
-      VITE_EVENTS_API_URL: https://script.google.com/macros/s/AKfycbxQIRBA_Qsu_H1QTEIAOdgPT1K9f4fVwfj738ddToR6WwJGsnR6wDhwV9whVLROk1_X8g/exec
-      VITE_RESERVATION_API_URL: https://script.google.com/macros/s/AKfycbzEKcGPQim0xX3YAbWVclAE9LaRvlq--TA-fDLBUUrLXFf9YeZjsdzt-Dbj7hP1RPQf/exec
+      VITE_API_URL: ${{ vars.VITE_API_URL || 'https://script.google.com/macros/s/AKfycbzONOmQfiiuOEn7_jeOChPkzS-_qAsuFfMDreUs3o43OLOF6e8GezyDny8yqtL_TUBR6Q/exec' }}
+      VITE_EVENTS_API_URL: ${{ vars.VITE_EVENTS_API_URL || 'https://script.google.com/macros/s/AKfycbxQIRBA_Qsu_H1QTEIAOdgPT1K9f4fVwfj738ddToR6WwJGsnR6wDhwV9whVLROk1_X8g/exec' }}
+      VITE_RESERVATION_API_URL: ${{ vars.VITE_RESERVATION_API_URL || 'https://script.google.com/macros/s/AKfycbzEKcGPQim0xX3YAbWVclAE9LaRvlq--TA-fDLBUUrLXFf9YeZjsdzt-Dbj7hP1RPQf/exec' }}
       VITE_ENABLE_MATERIALS_UPLOAD: ${{ vars.VITE_ENABLE_MATERIALS_UPLOAD || 'false' }}
       VITE_MATERIALS_UPLOAD_API_URL: ${{ vars.VITE_MATERIALS_UPLOAD_API_URL || '' }}
     steps:
@@ -57,3 +57,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
